@@ -1,0 +1,72 @@
+.hero-section {
+    padding-top: 90px;
+    padding-bottom: 90px;
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+    line-height: 1.2;
+}
+
+.hero-section p {
+    font-size: 1.15rem;
+    max-width: 600px;
+}
+
+.hero-section .btn {
+    padding: 12px 28px;
+    font-weight: 600;
+}
+
+/* Navbar - a bit more height and spacing between links */
+.navbar {
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.navbar-nav .nav-link {
+    margin-right: 18px;
+    font-weight: 500;
+}
+
+/* Trending post cards */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+}
+
+.card-body {
+    padding: 18px;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Category boxes */
+.category-box {
+    padding: 28px 15px;
+    border-radius: 14px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.category-box:hover {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+    border-color: #0d6efd !important;
+}
+
+.category-box i {
+    font-size: 2rem;
+}
+
+/* Section headings */
+section h3 {
+    font-size: 1.6rem;
+}
