@@ -514,7 +514,10 @@
                                 </ul>
                             </div><!--//app-doc-meta-->
 
-                            <div class="app-card-actions">
+                          
+                </div><!--//col-->
+                <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
+                    <div class="app-card app-card  <div class="app-card-actions">
                                 <div class="dropdown">
                                     <div class="dropdown-toggle no-toggle-arrow" data-bs-toggle="dropdown"
                                         aria-expanded="false">
@@ -565,10 +568,7 @@
 
                         </div><!--//app-card-body-->
 
-                    </div><!--//app-card-->
-                </div><!--//col-->
-                <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
-                    <div class="app-card app-card-doc shadow-sm h-100">
+                    </div><!--//app-card-->-doc shadow-sm h-100">
                         <div class="app-card-thumb-holder p-3">
                             <span class="icon-holder">
                                 <i class="fas fa-file-powerpoint ppt-file"></i>
