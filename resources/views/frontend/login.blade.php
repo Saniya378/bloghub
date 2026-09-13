@@ -30,7 +30,9 @@
                                     <input class="form-check-input" type="checkbox" id="rememberMe">
                                     <label class="form-check-label small" for="rememberMe">Remember Me</label>
                                 </div>
-                                <a href="#" class="small text-decoration-none">Forgot Password?</a>
+                                <a href="{{ url('/forget-password') }}" class="small text-decoration-none">Forgot
+                                    Password?</a>
+
                             </div>
 
                             <button type="submit" class="btn btn-primary w-100 mb-3">Login</button>

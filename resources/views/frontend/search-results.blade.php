@@ -3,6 +3,7 @@
 @section('title', 'BlogHub - Search Results')
 
 @section('content')
+@include('frontend.components.navbar')
 
     <section class="container py-5">
 
@@ -20,8 +21,8 @@
             <div class="col-lg-8">
 
                 <div class="d-flex mb-4 pb-4 border-bottom position-relative">
-                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
-                    <img src="https://placehold.co/120x90" class="rounded me-3" alt="thumbnail">
+                    <a href="{{ url('/blog/future-of-ai') }}" class="stretched-link"></a>
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVTC-sGcFxRBrTzO-WIiUVUCpS3egZD3PBnug8tz5LzA&s=10" class="rounded me-3" style="width:120px;height:90px;object-fit:cover;" alt="thumbnail">
                     <div>
                         <h6 class="fw-bold mb-1">The Future of Artificial Intelligence</h6>
                         <small class="text-secondary">May 16, 2025 &bull; 5 min read</small>
@@ -29,8 +30,8 @@
                 </div>
 
                 <div class="d-flex mb-4 pb-4 border-bottom position-relative">
-                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
-                    <img src="https://placehold.co/120x90" class="rounded me-3" alt="thumbnail">
+                    <a href="{{ url('/blog/5g-technology') }}" class="stretched-link"></a>
+                    <img src="https://loremflickr.com/120/90/5g,network" class="rounded me-3" style="width:120px;height:90px;object-fit:cover;" alt="thumbnail">
                     <div>
                         <h6 class="fw-bold mb-1">5G Technology: What It Means for You</h6>
                         <small class="text-secondary">May 15, 2025 &bull; 5 min read</small>
@@ -38,8 +39,8 @@
                 </div>
 
                 <div class="d-flex mb-4 pb-4 border-bottom position-relative">
-                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
-                    <img src="https://placehold.co/120x90" class="rounded me-3" alt="thumbnail">
+                    <a href="{{ url('/blog/best-laptops-2025') }}" class="stretched-link"></a>
+                    <img src="https://loremflickr.com/120/90/laptop,coding" class="rounded me-3" style="width:120px;height:90px;object-fit:cover;" alt="thumbnail">
                     <div>
                         <h6 class="fw-bold mb-1">Best Laptops for Developers in 2025</h6>
                         <small class="text-secondary">May 12, 2025 &bull; 6 min read</small>
@@ -47,8 +48,8 @@
                 </div>
 
                 <div class="d-flex mb-4 pb-4 border-bottom position-relative">
-                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
-                    <img src="https://placehold.co/120x90" class="rounded me-3" alt="thumbnail">
+                    <a href="{{ url('/blog/top-tech-gadgets-2025') }}" class="stretched-link"></a>
+                    <img src="https://loremflickr.com/120/90/gadgets,technology" class="rounded me-3" style="width:120px;height:90px;object-fit:cover;" alt="thumbnail">
                     <div>
                         <h6 class="fw-bold mb-1">Top 10 Tech Gadgets in 2025</h6>
                         <small class="text-secondary">May 9, 2025 &bull; 5 min read</small>
@@ -56,8 +57,8 @@
                 </div>
 
                 <div class="d-flex position-relative">
-                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
-                    <img src="https://placehold.co/120x90" class="rounded me-3" alt="thumbnail">
+                    <a href="{{ url('/blog/tech-changing-education') }}" class="stretched-link"></a>
+                    <img src="https://loremflickr.com/120/90/education,classroom" class="rounded me-3" style="width:120px;height:90px;object-fit:cover;" alt="thumbnail">
                     <div>
                         <h6 class="fw-bold mb-1">How Technology is Changing Education</h6>
                         <small class="text-secondary">May 7, 2025 &bull; 4 min read</small>
@@ -93,5 +94,7 @@
         </div>
 
     </section>
+
+    @include('frontend.components.footer')
 
 @endsection

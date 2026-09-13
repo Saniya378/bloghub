@@ -3,6 +3,7 @@
 @section('title', 'BlogHub - Newsletter')
 
 @section('content')
+@include('frontend.components.navbar')
 
     <section class="container py-5">
         <div class="row justify-content-center">
@@ -46,5 +47,7 @@
             </div>
         </div>
     </section>
+
+    @include('frontend.components.footer')
 
 @endsection

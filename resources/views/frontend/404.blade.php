@@ -3,6 +3,7 @@
 @section('title', 'BlogHub - Page Not Found')
 
 @section('content')
+@include('frontend.components.navbar')
 
     <section class="container py-5 text-center">
         <div class="py-5">
@@ -15,5 +16,7 @@
             <a href="{{ url('/') }}" class="btn btn-primary px-4">Go to Home Page</a>
         </div>
     </section>
+
+    @include('frontend.components.footer')
 
 @endsection

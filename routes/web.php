@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BlogController;
 
 Route::get('/', function () {
     return view('frontend.home');
@@ -30,9 +31,15 @@ Route::get('/register', function () {
     return view('frontend.register');
 });
 
-Route::get('/blog', function () {
-    return view('frontend.blog-single');
+Route::get('/forget-password', function () {
+    return view('frontend.forget-password');
 });
+
+// Dynamic blog post route — /blog/{slug}
+Route::get('/blog/{slug}', [BlogController::class, 'show']);
+
+// Dynamic category route — /category/{slug}
+Route::get('/category/{slug}', [BlogController::class, 'category']);
 
 Route::get('/search', function () {
     return view('frontend.search-results');
@@ -61,6 +68,7 @@ Route::get('/terms', function () {
 Route::get('/privacy', function () {
     return view('frontend.privacy');
 });
+
 
 Route::get('/dashboard', function () {
     return view('backend.index');
