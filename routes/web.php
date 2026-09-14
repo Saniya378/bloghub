@@ -26,6 +26,11 @@ Route::get('/login', function () {
     return view('frontend.login');
 });
 
+Route::get('/loginnew', function () {
+    return view('frontend.login');
+});
+
+
 Route::get('/register', function () {
     return view('frontend.register');
 });
@@ -111,3 +116,7 @@ Route::get('/reset-password', function () {
     return view('backend.reset-password');
 });
 
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

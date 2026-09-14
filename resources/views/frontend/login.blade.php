@@ -14,15 +14,27 @@
                         <h3 class="fw-bold mb-1">Welcome Back!</h3>
                         <p class="text-secondary mb-4">Login to continue to BlogHub</p>
 
-                        <form>
-                            <div class="mb-3">
+                        <form method="POST" action="{{ route('login') }}">
+                            @csrf                            <div class="mb-3">
                                 <label class="form-label">Email Address</label>
-                                <input type="email" class="form-control" placeholder="you@example.com">
+                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+
+                                @error('email')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
                             </div>
 
                             <div class="mb-2">
                                 <label class="form-label">Password</label>
-                                <input type="password" class="form-control" placeholder="Enter your password">
+                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
+
+                                @error('password')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
                             </div>
 
                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -30,9 +42,7 @@
                                     <input class="form-check-input" type="checkbox" id="rememberMe">
                                     <label class="form-check-label small" for="rememberMe">Remember Me</label>
                                 </div>
-                                <a href="{{ url('/forget-password') }}" class="small text-decoration-none">Forgot
-                                    Password?</a>
-
+                                <a href="#" class="small text-decoration-none">Forgot Password?</a>
                             </div>
 
                             <button type="submit" class="btn btn-primary w-100 mb-3">Login</button>
