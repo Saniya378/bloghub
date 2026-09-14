@@ -14,7 +14,7 @@
 
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100 flex-row position-relative">
-                    <a href="{{ url('/blog/future-of-ai') }}" class="stretched-link"></a>
+                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVTC-sGcFxRBrTzO-WIiUVUCpS3egZD3PBnug8tz5LzA&s=10" class="rounded-start" style="width:160px;height:140px;object-fit:cover;" alt="article">
                     <div class="card-body">
                         <h6 class="card-title">The Future of Artificial Intelligence</h6>
@@ -25,7 +25,7 @@
 
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100 flex-row position-relative">
-                    <a href="{{ url('/blog/ai-healthcare') }}" class="stretched-link"></a>
+                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
                     <img src="https://loremflickr.com/160/140/healthcare,medical" class="rounded-start" style="width:160px;height:140px;object-fit:cover;" alt="article">
                     <div class="card-body">
                         <h6 class="card-title">AI in Healthcare: Benefits and Challenges</h6>
@@ -36,7 +36,7 @@
 
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100 flex-row position-relative">
-                    <a href="{{ url('/blog/machine-learning-basics') }}" class="stretched-link"></a>
+                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
                     <img src="https://loremflickr.com/160/140/machinelearning,computer" class="rounded-start" style="width:160px;height:140px;object-fit:cover;" alt="article">
                     <div class="card-body">
                         <h6 class="card-title">Machine Learning Basics for Beginners</h6>
@@ -47,7 +47,7 @@
 
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100 flex-row position-relative">
-                    <a href="{{ url('/blog/ai-changing-world') }}" class="stretched-link"></a>
+                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
                     <img src="https://loremflickr.com/160/140/artificialintelligence,robot" class="rounded-start" style="width:160px;height:140px;object-fit:cover;" alt="article">
                     <div class="card-body">
                         <h6 class="card-title">How AI is Changing the World</h6>

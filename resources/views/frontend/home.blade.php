@@ -28,7 +28,7 @@
 
             <div class="col-md-3">
                 <div class="card h-100 border-0 shadow-sm position-relative">
-                    <a href="{{ url('/blog/future-of-ai') }}" class="stretched-link"></a>
+                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
                     <span class="badge bg-primary position-absolute m-2">Technology</span>
                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVTC-sGcFxRBrTzO-WIiUVUCpS3egZD3PBnug8tz5LzA&s=10" class="card-img-top" alt="Article image">
                     <div class="card-body">
@@ -40,7 +40,7 @@
 
             <div class="col-md-3">
                 <div class="card h-100 border-0 shadow-sm position-relative">
-                    <a href="{{ url('/blog/maldives-guide') }}" class="stretched-link"></a>
+                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
                     <span class="badge bg-success position-absolute m-2">Travel</span>
                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXLHedoXnRsGLmryCFmkRr67p6DKDhIupswrSYmaBIvg&s=10" class="card-img-top" alt="Article image">
                     <div class="card-body">
@@ -52,7 +52,7 @@
 
             <div class="col-md-3">
                 <div class="card h-100 border-0 shadow-sm position-relative">
-                    <a href="{{ url('/blog/healthy-recipes') }}" class="stretched-link"></a>
+                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
                     <span class="badge bg-warning text-dark position-absolute m-2">Food</span>
                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsU55EnkZObOdYQXWuOqSaKVJqhsqSYja4qEfgK3x-cg&s=10" class="card-img-top" alt="Article image">
                     <div class="card-body">
@@ -64,7 +64,7 @@
 
             <div class="col-md-3">
                 <div class="card h-100 border-0 shadow-sm position-relative">
-                    <a href="{{ url('/blog/startup-ideas-2025') }}" class="stretched-link"></a>
+                    <a href="{{ url('/blog') }}" class="stretched-link"></a>
                     <span class="badge bg-info text-dark position-absolute m-2">Business</span>
                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNlHdWYiA-2nXpEfxzzu-K8UGzPhMdtek1acZEYbyw0Q&s=10" class="card-img-top" alt="Article image">
                     <div class="card-body">
@@ -85,7 +85,7 @@
 
             <div class="col-6 col-md-2">
                 <div class="border rounded-3 h-100 category-box position-relative">
-                    <a href="{{ url('/category/technology') }}" class="stretched-link"></a>
+                    <a href="{{ url('/tag') }}" class="stretched-link"></a>
                     <i class="bi bi-cpu fs-2 text-primary"></i>
                     <p class="fw-semibold mt-2 mb-0">Technology</p>
                     <small class="text-secondary">120 Articles</small>
@@ -94,7 +94,7 @@
 
             <div class="col-6 col-md-2">
                 <div class="border rounded-3 h-100 category-box position-relative">
-                    <a href="{{ url('/category/education') }}" class="stretched-link"></a>
+                    <a href="{{ url('/tag') }}" class="stretched-link"></a>
                     <i class="bi bi-mortarboard fs-2 text-primary"></i>
                     <p class="fw-semibold mt-2 mb-0">Education</p>
                     <small class="text-secondary">95 Articles</small>
@@ -103,7 +103,7 @@
 
             <div class="col-6 col-md-2">
                 <div class="border rounded-3 h-100 category-box position-relative">
-                    <a href="{{ url('/category/travel') }}" class="stretched-link"></a>
+                    <a href="{{ url('/tag') }}" class="stretched-link"></a>
                     <i class="bi bi-airplane fs-2 text-primary"></i>
                     <p class="fw-semibold mt-2 mb-0">Travel</p>
                     <small class="text-secondary">80 Articles</small>
@@ -112,7 +112,7 @@
 
             <div class="col-6 col-md-2">
                 <div class="border rounded-3 h-100 category-box position-relative">
-                    <a href="{{ url('/category/food') }}" class="stretched-link"></a>
+                    <a href="{{ url('/tag') }}" class="stretched-link"></a>
                     <i class="bi bi-cup-hot fs-2 text-primary"></i>
                     <p class="fw-semibold mt-2 mb-0">Food</p>
                     <small class="text-secondary">60 Articles</small>
@@ -121,7 +121,7 @@
 
             <div class="col-6 col-md-2">
                 <div class="border rounded-3 h-100 category-box position-relative">
-                    <a href="{{ url('/category/business') }}" class="stretched-link"></a>
+                    <a href="{{ url('/tag') }}" class="stretched-link"></a>
                     <i class="bi bi-briefcase fs-2 text-primary"></i>
                     <p class="fw-semibold mt-2 mb-0">Business</p>
                     <small class="text-secondary">70 Articles</small>
@@ -130,7 +130,7 @@
 
             <div class="col-6 col-md-2">
                 <div class="border rounded-3 h-100 category-box position-relative">
-                    <a href="{{ url('/category/health') }}" class="stretched-link"></a>
+                    <a href="{{ url('/tag') }}" class="stretched-link"></a>
                     <i class="bi bi-heart-pulse fs-2 text-primary"></i>
                     <p class="fw-semibold mt-2 mb-0">Health</p>
                     <small class="text-secondary">40 Articles</small>
