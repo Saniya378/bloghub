@@ -1,0 +1,16 @@
+{
+  "name": "BlogHub",
+  "short_name": "BlogHub",
+  "description": "BlogHub — Modern Publishing Platform & Deep Reads",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}

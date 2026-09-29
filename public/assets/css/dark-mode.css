@@ -1,0 +1,143 @@
+/* ==========================================================================
+   BlogHub — Dark Mode Theme
+   Dark-mode counterparts for every design token and component base
+   ========================================================================== */
+
+[data-theme="dark"] {
+  /* Brand Color Palette Overrides */
+  --color-primary: #9BB7E7;
+  --color-primary-hover: #BFD4F8;
+  --color-primary-light: #1E2B45;
+  --color-primary-subtle: rgba(155, 183, 231, 0.15);
+
+  --color-accent: #E85B33;
+  --color-accent-hover: #F27956;
+  --color-accent-light: #FF8F70;
+  --color-accent-subtle: rgba(232, 91, 51, 0.18);
+
+  --color-secondary: #6EA378;
+  --color-secondary-hover: #8AB892;
+  --color-secondary-light: #283C2D;
+  --color-secondary-subtle: rgba(110, 163, 120, 0.18);
+
+  /* Neutrals & Surfaces */
+  --color-bg: #0D1117;
+  --color-surface: #161D2A;
+  --color-surface-subtle: #1F2839;
+  --color-card-bg: #161D2A;
+  --color-input-bg: #111722;
+
+  /* Typography Colors */
+  --color-text: #F1F4FA;
+  --color-text-muted: #9DA7B8;
+  --color-text-light: #6A7487;
+
+  /* Dividers & Borders */
+  --color-border: #2B374D;
+  --color-border-subtle: #1F2839;
+
+  /* Status Colors */
+  --color-success: #66BB6A;
+  --color-success-bg: rgba(46, 125, 50, 0.2);
+  --color-success-border: #2E7D32;
+  --color-warning: #FFA726;
+  --color-warning-bg: rgba(255, 167, 38, 0.18);
+  --color-warning-border: #F57C00;
+  --color-danger: #EF5350;
+  --color-danger-bg: rgba(239, 83, 80, 0.18);
+  --color-danger-border: #D32F2F;
+  --color-info: #42A5F5;
+  --color-info-bg: rgba(66, 165, 245, 0.18);
+  --color-info-border: #1976D2;
+
+  /* Elevation Shadows for Dark Surfaces */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* --------------------------------------------------------------------------
+   Bootstrap & Global Component Overrides in Dark Mode
+   -------------------------------------------------------------------------- */
+[data-theme="dark"] body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .dropdown-menu {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] .dropdown-item:focus {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-accent);
+}
+
+[data-theme="dark"] .modal-content {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background-color: var(--color-input-bg);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background-color: var(--color-input-bg);
+  border-color: var(--color-accent);
+  color: var(--color-text);
+  box-shadow: 0 0 0 3px var(--color-accent-subtle);
+}
+
+[data-theme="dark"] .form-check-input {
+  background-color: var(--color-input-bg);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .form-check-input:checked {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+[data-theme="dark"] .table {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .list-group-item {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] hr {
+  border-color: var(--color-border);
+  opacity: 1;
+}
+
+[data-theme="dark"] code {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-accent);
+}
