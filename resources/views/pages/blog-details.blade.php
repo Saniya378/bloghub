@@ -22,13 +22,17 @@
             <h1 class="h2 fw-bold mb-3">{{ $article->title }}</h1>
             <div class="d-flex flex-wrap align-items-center gap-3 text-muted mb-3">
                 <a href="{{ route('authors.show', $article->user->username) }}" class="d-flex align-items-center text-decoration-none text-dark">
+                    @if($article->user->avatar)
                     <img src="{{ $article->user->avatar }}" alt="{{ $article->user->name }}" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                    @else
+                    <span class="rounded-circle d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px; background: var(--color-primary); color: white; font-weight: 700;">{{ strtoupper(substr($article->user->name, 0, 1)) }}</span>
+                    @endif
                     <div>
                         <div class="fw-semibold">{{ $article->user->name }}</div>
                         <small class="text-muted">{{ $article->user->tagline }}</small>
                     </div>
                 </a>
-                <span><i class="fa-regular fa-calendar me-1"></i>{{ $article->published_at->format('M d, Y') }}</span>
+                <span><i class="fa-regular fa-calendar me-1"></i>{{ $article->published_at ? $article->published_at->format('M d, Y') : 'Draft' }}</span>
                 <span><i class="fa-regular fa-clock me-1"></i>{{ $article->reading_time }}</span>
                 <span><i class="fa-regular fa-eye me-1"></i>{{ number_format($article->views) }} views</span>
             </div>
@@ -91,7 +95,11 @@
                 <!-- Author Box -->
                 <div class="card my-4">
                     <div class="card-body d-flex gap-4">
+                        @if($article->user->avatar)
                         <img src="{{ $article->user->avatar }}" alt="{{ $article->user->name }}" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;">
+                        @else
+                        <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 80px; height: 80px; background: var(--color-primary); color: white; font-weight: 700; font-size: 2rem;">{{ strtoupper(substr($article->user->name, 0, 1)) }}</span>
+                        @endif
                         <div>
                             <div class="text-muted small">Written by</div>
                             <h3 class="h5 fw-bold mb-1">
@@ -130,43 +138,22 @@
                     @endauth
 
                     <div id="commentsList">
-                        @foreach($article->comments->where('status', 'approved')->where('parent_id', null) as $comment)
+                        @foreach($article->comments->where('status', 'approved') as $comment)
                         <div class="d-flex gap-3 mb-4" id="comment-{{ $comment->id }}">
-                            <img src="{{ $comment->user->avatar }}" alt="{{ $comment->user->name }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                            <img src="{{ $comment->user->avatar ?? 'https://ui-avatars.com/api/?name=' . urlencode($comment->user->name ?? 'User') }}" alt="{{ $comment->user->name ?? 'User' }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="fw-semibold">{{ $comment->user->name }}</span>
+                                    <span class="fw-semibold">{{ $comment->user->name ?? 'User' }}</span>
                                     <small class="text-muted">{{ $comment->created_at->diffForHumans() }}</small>
                                 </div>
                                 <p class="mb-2">{{ $comment->content }}</p>
                                 <div class="d-flex gap-3">
                                     @auth
-                                    <button class="btn btn-sm btn-link p-0 text-primary reply-btn" data-comment-id="{{ $comment->id }}">Reply</button>
                                     @if(auth()->id() === $comment->user_id || auth()->user()->role === 'admin')
                                     <button class="btn btn-sm btn-link p-0 text-danger delete-comment-btn" data-comment-id="{{ $comment->id }}">Delete</button>
                                     @endif
                                     @endauth
                                 </div>
-                                <!-- Reply form (hidden by default) -->
-                                <div class="reply-form mt-3 d-none" id="reply-form-{{ $comment->id }}">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control reply-input" placeholder="Write a reply..." maxlength="500">
-                                        <button class="btn btn-primary submit-reply" data-comment-id="{{ $comment->id }}">Reply</button>
-                                    </div>
-                                </div>
-                                <!-- Replies -->
-                                @foreach($comment->replies->where('status', 'approved') as $reply)
-                                <div class="d-flex gap-3 mt-3 ms-4">
-                                    <img src="{{ $reply->user->avatar }}" alt="{{ $reply->user->name }}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
-                                    <div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="fw-semibold small">{{ $reply->user->name }}</span>
-                                            <small class="text-muted">{{ $reply->created_at->diffForHumans() }}</small>
-                                        </div>
-                                        <p class="mb-0 small">{{ $reply->content }}</p>
-                                    </div>
-                                </div>
-                                @endforeach
                             </div>
                         </div>
                         @endforeach

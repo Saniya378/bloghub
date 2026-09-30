@@ -2,7 +2,6 @@
 
 @section('title', 'BlogHub — Thoughtful Perspectives on Tech, Design & Culture')
 @section('meta_description', 'Discover long-form essays, tech deep dives, and cultural commentary written by independent authors on BlogHub.')
-@include('partials.navbar')
 
 @section('content')
 <!-- Hero Section -->

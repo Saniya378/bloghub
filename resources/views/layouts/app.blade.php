@@ -46,7 +46,7 @@
     </div>
 
     <!-- 2. Sticky Navbar Partial -->
-    
+    @include('partials.navbar')
 
     <!-- 3. Global Search Overlay with Live Suggestions -->
     @include('partials.search-overlay')
@@ -65,12 +65,9 @@
     </button>
 
     <!-- 7. Footer Partial -->
-    {{-- @include('partials.footer') --}}
- @if (!request()->is('login') && !request()->is('register') && !request()->is('contact'))
-
-    @include('partials.footer')
-
-@endif
+    @if (!request()->is('login') && !request()->is('register'))
+        @include('partials.footer')
+    @endif
 
     <!-- Bootstrap 5 JS Bundle CDN (deferred) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous" defer></script>

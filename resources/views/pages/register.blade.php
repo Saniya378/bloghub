@@ -172,10 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
         strengthText.style.color = color;
     });
 
-    // Form submission
+    // Form submission — client-side validation only; let native form POST to server
     form.addEventListener('submit', (e) => {
-        e.preventDefault();
-
         const name = nameInput.value.trim();
         const email = emailInput.value.trim();
         const password = passwordInput.value;
@@ -209,24 +207,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (hasError) {
+            e.preventDefault();
             feedback.textContent = 'Please fill in all fields correctly and accept the terms.';
             feedback.style.display = 'block';
             return;
         }
 
-        // Show loading state
+        // Show loading state while form posts to server
         submitBtn.disabled = true;
         spinner.classList.remove('d-none');
         btnText.textContent = 'Creating account...';
-
-        // Simulate async registration
-        setTimeout(() => {
-            submitBtn.disabled = false;
-            spinner.classList.add('d-none');
-            btnText.textContent = 'Create Account';
-
-            showToast('Account Created', 'Welcome to BlogHub! Your account has been created successfully.', 'fa-solid fa-circle-check text-success');
-        }, 1500);
+        // Allow natural form submission to proceed
     });
 
     if (window.initScrollReveal) window.initScrollReveal();

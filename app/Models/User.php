@@ -135,11 +135,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Alias for followers(): users this user is followed by.
+     * Alias for follows(): authors this user is following.
      */
     public function following(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->followers();
+        return $this->follows();
     }
 
     /**

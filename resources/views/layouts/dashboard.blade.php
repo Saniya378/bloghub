@@ -10,28 +10,41 @@
     <link rel="stylesheet" href="{{ asset('assets/css/components.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/dark-mode.css') }}">
     <style>
-        /* Dashboard body: allow position: sticky to work (overrides public-site rules only) */
         body.dashboard-body {
-            display: block;
-            overflow: visible;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-body, system-ui, sans-serif);
+            background-color: var(--color-bg, #f8f9fa);
+            color: var(--color-text, #212529);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
         }
         .dashboard-sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
             width: 260px;
+            min-width: 260px;
+            max-width: 260px;
             height: 100vh;
+            position: sticky;
+            top: 0;
             overflow-y: auto;
+            flex-shrink: 0;
             z-index: 1040;
+            background-color: #ffffff;
+            transition: transform 0.3s ease-in-out;
         }
         .dashboard-content {
-            margin-left: 260px;
-            width: calc(100% - 260px);
+            flex: 1 1 auto;
             min-width: 0;
-            min-height: 100vh;
-            overflow-x: clip;
             display: flex;
             flex-direction: column;
+            min-height: 100vh;
+            background-color: var(--color-bg, #f8f9fa);
         }
         .dashboard-main {
             flex-grow: 1;
@@ -42,6 +55,7 @@
             position: sticky;
             top: 0;
             z-index: 1030;
+            background-color: #ffffff;
         }
         .sidebar-backdrop {
             display: none;
@@ -52,8 +66,10 @@
         }
         @media (max-width: 991.98px) {
             .dashboard-sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
                 transform: translateX(-100%);
-                transition: transform 0.3s;
             }
             .dashboard-sidebar.show {
                 transform: translateX(0);
@@ -62,7 +78,6 @@
                 display: block;
             }
             .dashboard-content {
-                margin-left: 0;
                 width: 100%;
             }
         }
@@ -71,13 +86,14 @@
             align-items: center;
             gap: 12px;
             padding: 12px 20px;
-            color: var(--color-text-muted);
+            color: var(--color-text-muted, #575E6C);
             text-decoration: none;
             transition: all 0.2s;
+            border-radius: var(--border-radius, 6px);
         }
         .sidebar-link:hover, .sidebar-link.active {
-            color: var(--color-primary);
-            background: var(--color-primary-subtle);
+            color: var(--color-primary, #1F2A44);
+            background: var(--color-primary-subtle, rgba(31, 42, 68, 0.08));
         }
         .sidebar-link i {
             width: 20px;
@@ -86,6 +102,7 @@
     </style>
 </head>
 <body class="dashboard-body">
+    <div class="dashboard-wrapper">
     <!-- Sidebar -->
     <aside class="dashboard-sidebar bg-white border-end" id="sidebar">
         <div class="p-4 border-bottom">
@@ -200,6 +217,7 @@
             @endif
             @yield('content')
         </main>
+    </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

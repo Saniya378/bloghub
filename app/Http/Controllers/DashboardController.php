@@ -101,7 +101,7 @@ class DashboardController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:articles,slug,' . ($article?->id ?? 'NULL'),
+            'slug' => 'required|string|max:255|unique:articles,slug,' . ($article?->id ?? 'NULL') . ',id',
             'excerpt' => 'required|string|max:500',
             'content' => 'required|string',
             'category_slug' => 'required|string|in:technology,education,travel,food,business,sports,health,lifestyle,finance,science,art,culture',

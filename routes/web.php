@@ -58,8 +58,19 @@ Route::post('/register', [AuthController::class, 'register'])->middleware('throt
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 // OTP / Password Reset routes
+Route::get('/forgot-password', function () {
+    return view('pages.forgot-password');
+})->name('password.request');
 Route::post('/forgot-password', [OtpController::class, 'requestOtp'])->middleware('throttle:3,1');
+
+Route::get('/verify-otp', function () {
+    return view('pages.verify-otp');
+})->name('password.verify');
 Route::post('/verify-otp', [OtpController::class, 'verifyOtp']);
+
+Route::get('/reset-password', function () {
+    return view('pages.reset-password');
+})->name('password.reset');
 Route::post('/reset-password', [OtpController::class, 'resetPassword']);
 
 // Protected routes (require authentication)

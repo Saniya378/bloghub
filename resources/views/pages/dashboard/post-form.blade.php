@@ -29,7 +29,7 @@
                     <label class="form-label fw-semibold">Slug</label>
                     <input type="text" name="slug" id="slug" class="form-control" value="{{ old('slug', $article->slug ?? '') }}" placeholder="auto-generated-from-title" required>
                     <small class="text-muted">Auto-generated from title. Edit if needed.</small>
-                    @error('slug') <div class="text-danger small">{{ $message }}</div> @endif
+                    @error('slug') <div class="text-danger small">{{ $message }}</div> @enderror
                 </div>
             </div>
 
@@ -39,7 +39,7 @@
                     <label class="form-label fw-semibold">Excerpt</label>
                     <textarea name="excerpt" class="form-control" rows="3" maxlength="500" placeholder="Brief summary of your article...">{{ old('excerpt', $article->excerpt ?? '') }}</textarea>
                     <small class="text-muted">{{ 500 - strlen(old('excerpt', $article->excerpt ?? '')) }} characters remaining</small>
-                    @error('excerpt') <div class="text-danger small">{{ $message }}</div> @endif
+                    @error('excerpt') <div class="text-danger small">{{ $message }}</div> @enderror
                 </div>
             </div>
 
@@ -66,7 +66,7 @@
                         <small class="text-muted">Reading time: <span id="readingTime">{{ $article->reading_time ?? '0 min read' }}</span></small>
                         <small class="text-muted"><span id="wordCount">0</span> words</small>
                     </div>
-                    @error('content') <div class="text-danger small">{{ $message }}</div> @endif
+                    @error('content') <div class="text-danger small">{{ $message }}</div> @enderror
                 </div>
             </div>
         </div>
@@ -85,7 +85,7 @@
                         <option value="{{ $cat }}" {{ old('category_slug', $article->category_slug ?? '') == $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
                         @endforeach
                     </select>
-                    @error('category_slug') <div class="text-danger small">{{ $message }}</div> @endif
+                    @error('category_slug') <div class="text-danger small">{{ $message }}</div> @enderror
 
                     <label class="form-label fw-semibold mt-3">Tags</label>
                     <input type="text" name="tags[]" class="form-control" value="{{ old('tags', isset($article) ? implode(', ', $article->tags ?? []) : '') }}" placeholder="Comma-separated tags">
@@ -112,7 +112,7 @@
                         <small class="text-muted d-block mt-1">Current image</small>
                     </div>
                     @endif
-                    @error('featured_image') <div class="text-danger small">{{ $message }}</div> @endif
+                    @error('featured_image') <div class="text-danger small">{{ $message }}</div> @enderror
                 </div>
             </div>
         </div>

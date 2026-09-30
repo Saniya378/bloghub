@@ -65,7 +65,11 @@
                     @auth
                     <div class="dropdown">
                         <button class="btn-bh btn-bh-ghost dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 44px;">
+                            @if(auth()->user()->avatar)
                             <img src="{{ auth()->user()->avatar }}" alt="" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                            @else
+                            <span class="rounded-circle d-inline-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; background: var(--color-primary); color: white; font-weight: 700; font-size: 0.875rem;">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                            @endif
                             <span class="d-none d-md-inline">{{ auth()->user()->name }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">

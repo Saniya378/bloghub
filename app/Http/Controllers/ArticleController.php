@@ -60,13 +60,11 @@ class ArticleController extends Controller
      */
     public function store(Request $request): \Illuminate\Http\JsonResponse|RedirectResponse
     {
-        $categories = Article::published()->distinct()->pluck('category_slug');
-
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'excerpt' => 'required|string|max:500',
             'content' => 'required|string',
-            'category_slug' => 'required|string|in:' . $categories->implode(','),
+            'category_slug' => 'required|string|in:technology,education,travel,food,business,sports,health,lifestyle,finance,science,art,culture',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
             'status' => 'required|in:draft,published',
@@ -113,13 +111,11 @@ class ArticleController extends Controller
             return back()->withErrors(['error' => 'Unauthorized']);
         }
 
-        $categories = Article::published()->distinct()->pluck('category_slug');
-
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
             'excerpt' => 'sometimes|required|string|max:500',
             'content' => 'sometimes|required|string',
-            'category_slug' => 'sometimes|required|string|in:' . $categories->implode(','),
+            'category_slug' => 'sometimes|required|string|in:technology,education,travel,food,business,sports,health,lifestyle,finance,science,art,culture',
             'tags' => 'nullable|array',
             'status' => 'sometimes|in:draft,published',
         ]);
