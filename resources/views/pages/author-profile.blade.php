@@ -58,7 +58,7 @@
 
                 <!-- Published Posts -->
                 <div>
-                    <h2 class="h4 fw-bold mb-4">Articles ({{ $posts->total }})</h2>
+                    <h2 class="h4 fw-bold mb-4">Articles ({{ $posts->total() }})</h2>
                     <div class="row g-4">
                         @foreach($posts as $post)
                         <div class="col-md-6">
