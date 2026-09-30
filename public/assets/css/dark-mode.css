@@ -141,3 +141,36 @@
   background-color: var(--color-surface-subtle);
   color: var(--color-accent);
 }
+
+/* Dashboard Dark Mode */
+[data-theme="dark"] .dashboard-sidebar {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .dashboard-topbar {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .dashboard-topbar .btn-link,
+[data-theme="dark"] .dashboard-topbar .dropdown-toggle {
+  color: var(--color-text) !important;
+}
+
+[data-theme="dark"] .sidebar-link {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .sidebar-link:hover,
+[data-theme="dark"] .sidebar-link.active {
+  color: var(--color-text);
+  background-color: var(--color-surface-subtle);
+}
+
+[data-theme="dark"] .card {
+  background-color: var(--color-card-bg);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}

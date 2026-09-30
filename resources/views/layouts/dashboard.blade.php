@@ -18,12 +18,14 @@
             color: var(--color-text, #212529);
             min-height: 100vh;
             overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .dashboard-wrapper {
             display: flex;
             min-height: 100vh;
             width: 100%;
             position: relative;
+            background-color: var(--color-bg, #f8f9fa);
         }
         .dashboard-sidebar {
             width: 260px;
@@ -35,8 +37,12 @@
             overflow-y: auto;
             flex-shrink: 0;
             z-index: 1040;
-            background-color: #ffffff;
-            transition: transform 0.3s ease-in-out;
+            background-color: var(--color-surface, #ffffff);
+            border-color: var(--color-border, #e0e0e0) !important;
+            transition: transform 0.3s ease-in-out, background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .dashboard-sidebar .border-bottom {
+            border-color: var(--color-border, #e0e0e0) !important;
         }
         .dashboard-content {
             flex: 1 1 auto;
@@ -45,17 +51,21 @@
             flex-direction: column;
             min-height: 100vh;
             background-color: var(--color-bg, #f8f9fa);
+            transition: background-color 0.3s ease;
         }
         .dashboard-main {
             flex-grow: 1;
             min-width: 0;
             overflow-x: auto;
+            background-color: var(--color-bg, #f8f9fa);
         }
         .dashboard-topbar {
             position: sticky;
             top: 0;
             z-index: 1030;
-            background-color: #ffffff;
+            background-color: var(--color-surface, #ffffff) !important;
+            border-color: var(--color-border, #e0e0e0) !important;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         .sidebar-backdrop {
             display: none;
@@ -99,12 +109,70 @@
             width: 20px;
             text-align: center;
         }
+
+        /* Dark Mode Dashboard Overrides */
+        [data-theme="dark"] .dashboard-sidebar {
+            background-color: var(--color-surface, #161D2A) !important;
+            border-color: var(--color-border, #2B374D) !important;
+        }
+        [data-theme="dark"] .dashboard-topbar {
+            background-color: var(--color-surface, #161D2A) !important;
+            border-color: var(--color-border, #2B374D) !important;
+            color: var(--color-text, #F1F4FA);
+        }
+        [data-theme="dark"] .dashboard-topbar .btn-link,
+        [data-theme="dark"] .dashboard-topbar .dropdown-toggle {
+            color: var(--color-text, #F1F4FA) !important;
+        }
+        [data-theme="dark"] .sidebar-link {
+            color: var(--color-text-muted, #9DA7B8);
+        }
+        [data-theme="dark"] .sidebar-link:hover,
+        [data-theme="dark"] .sidebar-link.active {
+            color: var(--color-text, #F1F4FA);
+            background-color: var(--color-surface-subtle, #1F2839);
+        }
+        [data-theme="dark"] .card {
+            background-color: var(--color-card-bg, #161D2A) !important;
+            border-color: var(--color-border, #2B374D) !important;
+            color: var(--color-text, #F1F4FA) !important;
+        }
+        [data-theme="dark"] .card-header,
+        [data-theme="dark"] .card-footer {
+            background-color: var(--color-surface-subtle, #1F2839) !important;
+            border-color: var(--color-border, #2B374D) !important;
+            color: var(--color-text, #F1F4FA) !important;
+        }
+        [data-theme="dark"] .text-dark {
+            color: var(--color-text, #F1F4FA) !important;
+        }
+        [data-theme="dark"] .text-muted {
+            color: var(--color-text-muted, #9DA7B8) !important;
+        }
+        [data-theme="dark"] .bg-light {
+            background-color: var(--color-surface-subtle, #1F2839) !important;
+            color: var(--color-text, #F1F4FA) !important;
+        }
+        [data-theme="dark"] .table {
+            color: var(--color-text, #F1F4FA) !important;
+            border-color: var(--color-border, #2B374D) !important;
+        }
+        [data-theme="dark"] .table th,
+        [data-theme="dark"] .table td {
+            background-color: transparent !important;
+            color: var(--color-text, #F1F4FA) !important;
+            border-color: var(--color-border, #2B374D) !important;
+        }
+        [data-theme="dark"] .table-hover > tbody > tr:hover > * {
+            background-color: var(--color-surface-subtle, #1F2839) !important;
+            color: var(--color-text, #F1F4FA) !important;
+        }
     </style>
 </head>
 <body class="dashboard-body">
     <div class="dashboard-wrapper">
     <!-- Sidebar -->
-    <aside class="dashboard-sidebar bg-white border-end" id="sidebar">
+    <aside class="dashboard-sidebar border-end" id="sidebar">
         <div class="p-4 border-bottom">
             <a href="{{ url('/') }}" class="d-flex align-items-center gap-2 text-decoration-none">
                 <span class="d-inline-flex align-items-center justify-content-center rounded" style="width: 36px; height: 36px; background: var(--color-primary); color: white; font-weight: 700;">B</span>
@@ -182,7 +250,7 @@
     <!-- Main Content -->
     <div class="dashboard-content">
         <!-- Topbar -->
-        <nav class="navbar navbar-expand-lg bg-white border-bottom dashboard-topbar">
+        <nav class="navbar navbar-expand-lg border-bottom dashboard-topbar">
             <div class="container-fluid">
                 <button class="btn btn-link d-lg-none" id="sidebarToggle"><i class="fa-solid fa-bars fa-lg"></i></button>
                 <div class="d-flex align-items-center gap-3 ms-auto">
