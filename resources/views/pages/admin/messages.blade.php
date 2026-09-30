@@ -86,3 +86,4 @@
     <div class="card-footer">{{ $messages->withQueryString()->links() }}</div>
     @endif
 </div>
+@endsection

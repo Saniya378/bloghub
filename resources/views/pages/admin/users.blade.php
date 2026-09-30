@@ -80,3 +80,4 @@
     <div class="card-footer">{{ $users->withQueryString()->links() }}</div>
     @endif
 </div>
+@endsection

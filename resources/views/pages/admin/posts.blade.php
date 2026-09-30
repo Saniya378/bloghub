@@ -103,3 +103,4 @@
     <div class="card-footer">{{ $posts->withQueryString()->links() }}</div>
     @endif
 </div>
+@endsection

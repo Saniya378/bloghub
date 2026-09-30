@@ -83,3 +83,4 @@
     <div class="card-footer">{{ $comments->withQueryString()->links() }}</div>
     @endif
 </div>
+@endsection

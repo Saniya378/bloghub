@@ -118,6 +118,7 @@
         </div>
     </div>
 </form>
+@endsection
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {

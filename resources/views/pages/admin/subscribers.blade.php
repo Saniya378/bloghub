@@ -35,3 +35,4 @@
     <div class="card-footer">{{ $subscribers->links() }}</div>
     @endif
 </div>
+@endsection
