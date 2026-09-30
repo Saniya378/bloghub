@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Form submission
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const code = Array.from(boxes).map(b => b.value).join('');
@@ -144,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (code.length !== 6) {
             feedback.textContent = 'Please enter the complete 6-digit code.';
             feedback.style.display = 'block';
+            feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
             return;
         }
 
@@ -152,19 +153,43 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.classList.remove('d-none');
         btnText.textContent = 'Verifying...';
 
-        // Simulate async verification
-        setTimeout(() => {
+        try {
+            const res = await fetch('{{ url("/verify-otp") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ email, otp: code })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                if (typeof showToast === 'function') {
+                    showToast('Verification Successful', 'Your code has been verified. Redirecting...', 'fa-solid fa-circle-check text-success');
+                }
+
+                setTimeout(() => {
+                    window.location.href = '{{ url("/reset-password") }}?email=' + encodeURIComponent(email);
+                }, 1000);
+            } else {
+                feedback.textContent = data.message || data.error || 'Invalid or expired verification code.';
+                feedback.style.display = 'block';
+                feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
+                submitBtn.disabled = false;
+                spinner.classList.add('d-none');
+                btnText.textContent = 'Verify Code';
+            }
+        } catch (err) {
+            feedback.textContent = 'Verification failed. Please try again.';
+            feedback.style.display = 'block';
+            feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
             submitBtn.disabled = false;
             spinner.classList.add('d-none');
             btnText.textContent = 'Verify Code';
-
-            showToast('Verification Successful', 'Your identity has been verified. Redirecting...', 'fa-solid fa-circle-check text-success');
-
-            // Redirect to reset password after delay
-            setTimeout(() => {
-                window.location.href = '/reset-password';
-            }, 1500);
-        }, 1200);
+        }
     });
 
     // Resend countdown

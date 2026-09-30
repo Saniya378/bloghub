@@ -36,12 +36,12 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex align-items-center justify-between mb-4">
-                                <div class="bh-form-check">
+                            <div class="d-flex align-items-center justify-content-between mb-4">
+                                <div class="bh-form-check d-flex align-items-center gap-2">
                                     <input type="checkbox" id="rememberMe" name="remember" class="bh-form-check-input">
-                                    <label for="rememberMe" class="bh-form-check-label">Remember me</label>
+                                    <label for="rememberMe" class="bh-form-check-label mb-0">Remember me</label>
                                 </div>
-                                <a href="/forgot-password" class="bh-auth-link">Forgot password?</a>
+                                <a href="{{ url('/forgot-password') }}" class="bh-auth-link">Forgot password?</a>
                             </div>
 
                             @if($errors->any())

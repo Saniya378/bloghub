@@ -17,19 +17,19 @@
                                 Enter your email address and we will send you a link to reset your password.
                             </p>
                         </div>
-
                         <!-- Request Reset Form -->
-                        <form id="forgotForm" class="bh-auth-form" novalidate>
+                        <form id="forgotForm" class="bh-auth-form" method="POST" action="{{ url('/forgot-password') }}" novalidate>
+                            @csrf
                             <div class="bh-form-group">
                                 <label for="forgotEmail" class="bh-form-label">Email Address</label>
-                                <input type="email" id="forgotEmail" class="bh-form-control" placeholder="you@example.com" required autocomplete="email">
+                                <input type="email" id="forgotEmail" name="email" class="bh-form-control" placeholder="you@example.com" required autocomplete="email">
                             </div>
 
                             <div class="bh-form-feedback" id="forgotFeedback" style="display: none;"></div>
 
                             <button type="submit" class="btn-bh btn-bh-primary w-100" id="forgotSubmitBtn">
                                 <span class="bh-spinner bh-spinner-sm me-2 d-none" id="forgotSpinner"></span>
-                                <span id="forgotBtnText">Send Reset Link</span>
+                                <span id="forgotBtnText">Send Reset Code</span>
                             </button>
                         </form>
 
@@ -40,15 +40,21 @@
                             </div>
                             <h3 class="bh-auth-confirmation-title">Check Your Email</h3>
                             <p class="bh-auth-confirmation-text">
-                                If an account exists with <strong id="forgotEmailDisplay"></strong>, we have sent a password reset link. Please check your inbox and spam folder.
+                                We have sent a 6-digit verification code to <strong id="forgotEmailDisplay"></strong>.
                             </p>
-                            <button type="button" class="btn-bh btn-bh-ghost" id="forgotResendBtn">
-                                <i class="fa-solid fa-rotate-left me-1"></i> Resend Link
+                            <div id="devOtpBox" class="alert alert-info py-2 px-3 mb-3 d-none">
+                                <small><strong>Demo/Dev OTP:</strong> <span id="devOtpCode" class="fw-bold fs-6 font-monospace"></span></small>
+                            </div>
+                            <a href="#" class="btn-bh btn-bh-primary w-100 mb-2" id="goToVerifyBtn" style="height: 44px;">
+                                Enter Verification Code
+                            </a>
+                            <button type="button" class="btn-bh btn-bh-ghost w-100" id="forgotResendBtn">
+                                <i class="fa-solid fa-rotate-left me-1"></i> Send Again
                             </button>
                         </div>
 
                         <div class="bh-auth-footer-text mt-4">
-                            Remember your password? <a href="/login" class="bh-auth-link">Sign in</a>
+                            Remember your password? <a href="{{ url('/login') }}" class="bh-auth-link">Sign in</a>
                         </div>
                     </div>
                 </div>
@@ -69,10 +75,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmation = document.getElementById('forgotConfirmation');
     const emailDisplay = document.getElementById('forgotEmailDisplay');
     const resendBtn = document.getElementById('forgotResendBtn');
+    const goToVerifyBtn = document.getElementById('goToVerifyBtn');
+    const devOtpBox = document.getElementById('devOtpBox');
+    const devOtpCode = document.getElementById('devOtpCode');
+
+    async function sendOtp(email) {
+        submitBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'Sending...';
+        feedback.style.display = 'none';
+
+        try {
+            const res = await fetch('{{ url("/forgot-password") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                emailDisplay.textContent = email;
+                form.classList.add('d-none');
+                confirmation.classList.remove('d-none');
+                goToVerifyBtn.href = '{{ url("/verify-otp") }}?email=' + encodeURIComponent(email);
+
+                if (data.otp) {
+                    devOtpCode.textContent = data.otp;
+                    devOtpBox.classList.remove('d-none');
+                }
+
+                if (typeof showToast === 'function') {
+                    showToast('Code Sent', data.message || 'Verification code sent.', 'fa-solid fa-circle-check text-success');
+                }
+            } else {
+                const errMsg = data.errors?.email?.[0] || data.message || data.error || 'Unable to find an account with this email.';
+                feedback.textContent = errMsg;
+                feedback.style.display = 'block';
+                feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
+            }
+        } catch (err) {
+            feedback.textContent = 'Something went wrong. Please check your connection.';
+            feedback.style.display = 'block';
+            feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
+        } finally {
+            submitBtn.disabled = false;
+            spinner.classList.add('d-none');
+            btnText.textContent = 'Send Reset Code';
+        }
+    }
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-
         const email = emailInput.value.trim();
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -83,35 +141,21 @@ document.addEventListener('DOMContentLoaded', () => {
             emailInput.classList.add('is-invalid');
             feedback.textContent = 'Please enter a valid email address.';
             feedback.style.display = 'block';
+            feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
             return;
         }
 
-        // Show loading state
-        submitBtn.disabled = true;
-        spinner.classList.remove('d-none');
-        btnText.textContent = 'Sending...';
-
-        // Simulate async request
-        setTimeout(() => {
-            submitBtn.disabled = false;
-            spinner.classList.add('d-none');
-            btnText.textContent = 'Send Reset Link';
-
-            // Show confirmation
-            emailDisplay.textContent = email;
-            form.classList.add('d-none');
-            confirmation.classList.remove('d-none');
-
-            showToast('Reset Link Sent', 'Check your email for password reset instructions.', 'fa-solid fa-circle-check text-success');
-        }, 1200);
+        sendOtp(email);
     });
 
-    // Resend link
     resendBtn.addEventListener('click', () => {
-        confirmation.classList.add('d-none');
-        form.classList.remove('d-none');
-        emailInput.value = '';
-        showToast('Link Resent', 'A new password reset link has been sent to your email.', 'fa-solid fa-rotate-left text-info');
+        const email = emailInput.value.trim();
+        if (email) {
+            sendOtp(email);
+        } else {
+            confirmation.classList.add('d-none');
+            form.classList.remove('d-none');
+        }
     });
 
     if (window.initScrollReveal) window.initScrollReveal();

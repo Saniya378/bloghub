@@ -565,14 +565,29 @@ html, body {
   html { font-size: 17px; }
 }
 
-/* Tap targets - minimum 44px */
-button, a, input, select, textarea, [role="button"] {
+/* Tap targets - minimum 44px (excluding checkboxes/radios) */
+button, a, input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="hidden"]), select, textarea, [role="button"] {
   min-height: 44px;
   min-width: 44px;
 }
 .btn-sm, .btn-sm a {
   min-height: 36px;
   min-width: 36px;
+}
+
+/* Checkboxes and Radios normal sizing */
+input[type="checkbox"], input[type="radio"], .form-check-input, .bh-form-check-input {
+  min-height: 18px !important;
+  min-width: 18px !important;
+  max-height: 18px !important;
+  max-width: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin-top: 3px !important;
+  accent-color: var(--color-accent) !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
 }
 
 /* Consistent button height */

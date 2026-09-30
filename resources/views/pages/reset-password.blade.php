@@ -145,8 +145,12 @@ document.addEventListener('DOMContentLoaded', () => {
         strengthText.style.color = color;
     });
 
+    // Get email from URL params
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email') || '';
+
     // Form submission
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const password = passwordInput.value;
@@ -169,8 +173,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (hasError) {
-            feedback.textContent = 'Passwords must match and be at least 8 characters.';
+            feedback.textContent = 'Passwords must match and be at least 8 characters with upper, lower & numbers.';
             feedback.style.display = 'block';
+            feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
+            return;
+        }
+
+        if (!email) {
+            feedback.textContent = 'Missing email context. Please start password reset from Forgot Password page.';
+            feedback.style.display = 'block';
+            feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
             return;
         }
 
@@ -179,18 +191,47 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.classList.remove('d-none');
         btnText.textContent = 'Resetting...';
 
-        // Simulate async reset
-        setTimeout(() => {
+        try {
+            const res = await fetch('{{ url("/reset-password") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    password_confirmation: confirm
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                form.classList.add('d-none');
+                successState.classList.remove('d-none');
+
+                if (typeof showToast === 'function') {
+                    showToast('Password Reset', data.message || 'Your password has been successfully updated.', 'fa-solid fa-circle-check text-success');
+                }
+            } else {
+                const errMsg = data.errors?.password?.[0] || data.message || data.error || 'Failed to reset password.';
+                feedback.textContent = errMsg;
+                feedback.style.display = 'block';
+                feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
+                submitBtn.disabled = false;
+                spinner.classList.add('d-none');
+                btnText.textContent = 'Reset Password';
+            }
+        } catch (err) {
+            feedback.textContent = 'Something went wrong. Please try again.';
+            feedback.style.display = 'block';
+            feedback.className = 'bh-form-feedback alert alert-danger p-2 small mt-2';
             submitBtn.disabled = false;
             spinner.classList.add('d-none');
             btnText.textContent = 'Reset Password';
-
-            // Show success state
-            form.classList.add('d-none');
-            successState.classList.remove('d-none');
-
-            showToast('Password Reset', 'Your password has been successfully updated.', 'fa-solid fa-circle-check text-success');
-        }, 1200);
+        }
     });
 
     if (window.initScrollReveal) window.initScrollReveal();
