@@ -18,20 +18,40 @@ class PostAuthorizationTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post('/articles', [
+        $response = $this->postJson('/articles', [
             'title' => 'Test Article',
             'excerpt' => 'Test excerpt',
             'content' => '<p>Test content</p>',
             'category_slug' => 'technology',
             'tags' => ['test', 'php'],
-            'status' => 'published',
+            'status' => 'pending',
         ]);
 
-        $response->assertStatus(200);
+        $response->assertStatus(201);
         $this->assertDatabaseHas('articles', [
             'title' => 'Test Article',
             'user_id' => $user->id,
+            'status' => 'pending',
         ]);
+    }
+
+    public function test_user_cannot_publish_directly_on_creation(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+
+        // Publishing is only possible through admin approval
+        $response = $this->postJson('/articles', [
+            'title' => 'Direct Publish Attempt',
+            'excerpt' => 'Test excerpt',
+            'content' => '<p>Test content</p>',
+            'category_slug' => 'technology',
+            'status' => 'published',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseMissing('articles', ['title' => 'Direct Publish Attempt']);
     }
 
     public function test_guest_cannot_create_article(): void

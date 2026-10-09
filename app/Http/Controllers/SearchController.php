@@ -13,32 +13,36 @@ class SearchController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = $request->input('q', '');
-        $results = [];
+        $query = trim($request->input('q', ''));
+        $category = $request->input('category', '');
+
+        $articlesQuery = Article::with('user')->published();
 
         if ($query) {
-            $results = Article::with('user')
-                ->published()
-                ->where(function ($q) use ($query) {
-                    $q->where('title', 'like', "%{$query}%")
-                        ->orWhere('excerpt', 'like', "%{$query}%")
-                        ->orWhere('content', 'like', "%{$query}%")
-                        ->orWhereJsonContains('tags', $query);
-                })
-                ->latest()
-                ->get();
+            $articlesQuery->where(function ($q) use ($query) {
+                $q->where('title', 'like', "%{$query}%")
+                    ->orWhere('excerpt', 'like', "%{$query}%")
+                    ->orWhere('content', 'like', "%{$query}%")
+                    ->orWhereJsonContains('tags', $query);
+            });
         }
 
-        // Suggested categories for empty state
+        if ($category) {
+            $articlesQuery->where('category_slug', $category);
+        }
+
+        $results = $articlesQuery->latest()->get();
+
+        // Suggested categories
         $suggestedCategories = Article::published()
             ->select('category_slug', \DB::raw('count(*) as count'))
             ->groupBy('category_slug')
             ->orderByDesc('count')
-            ->take(6)
+            ->take(8)
             ->pluck('category_slug')
             ->toArray();
 
-        return view('pages.search-results', compact('query', 'results', 'suggestedCategories'));
+        return view('pages.search-results', compact('query', 'category', 'results', 'suggestedCategories'));
     }
 
     /**

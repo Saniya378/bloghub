@@ -76,6 +76,7 @@
                             @if(auth()->user()->role !== 'reader')
                             <li><a class="dropdown-item" href="{{ auth()->user()->dashboardUrl() }}"><i class="fa-solid fa-gauge me-2"></i>Dashboard</a></li>
                             @endif
+                            <li><a class="dropdown-item {{ request()->is('favorites*') ? 'active' : '' }}" href="{{ route('favorites.index') }}"><i class="fa-solid fa-heart me-2"></i>My Favourites</a></li>
                             <li><a class="dropdown-item" href="{{ url('/bookmarks') }}"><i class="fa-solid fa-bookmark me-2"></i>Bookmarks</a></li>
                             <li><a class="dropdown-item" href="{{ url('/profile') }}"><i class="fa-solid fa-user me-2"></i>Profile</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -147,6 +148,14 @@
                     <i class="fa-solid fa-chevron-right fa-xs"></i>
                 </a>
                 @auth
+                <a class="bh-offcanvas-link {{ request()->is('favorites*') ? 'active' : '' }}" href="{{ route('favorites.index') }}">
+                    <span><i class="fa-solid fa-heart me-2"></i>My Favourites</span>
+                    <i class="fa-solid fa-chevron-right fa-xs"></i>
+                </a>
+                <a class="bh-offcanvas-link {{ request()->is('bookmarks*') ? 'active' : '' }}" href="{{ url('/bookmarks') }}">
+                    <span><i class="fa-solid fa-bookmark me-2"></i>Bookmarks</span>
+                    <i class="fa-solid fa-chevron-right fa-xs"></i>
+                </a>
                 @if(auth()->user()->role !== 'reader')
                 <a class="bh-offcanvas-link {{ request()->is('dashboard*') || request()->is('admin*') ? 'active' : '' }}" href="{{ auth()->user()->dashboardUrl() }}">
                     <span><i class="fa-solid fa-gauge me-2"></i>Dashboard</span>

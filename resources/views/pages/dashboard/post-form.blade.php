@@ -88,14 +88,48 @@
                     @error('category_slug') <div class="text-danger small">{{ $message }}</div> @enderror
 
                     <label class="form-label fw-semibold mt-3">Tags</label>
-                    <input type="text" name="tags[]" class="form-control" value="{{ old('tags', isset($article) ? implode(', ', $article->tags ?? []) : '') }}" placeholder="Comma-separated tags">
+                    <input type="text" name="tags[]" class="form-control" value="{{ is_array(old('tags')) ? implode(', ', old('tags')) : (old('tags', isset($article) ? implode(', ', $article->tags ?? []) : '')) }}" placeholder="Comma-separated tags">
                     <small class="text-muted">Separate tags with commas</small>
 
                     <label class="form-label fw-semibold mt-3">Status</label>
-                    <div class="d-flex gap-2">
-                        <button type="submit" name="status" value="draft" class="btn btn-outline-warning flex-fill"><i class="fa-solid fa-save me-1"></i> Save Draft</button>
-                        <button type="submit" name="status" value="published" class="btn btn-success flex-fill"><i class="fa-solid fa-rocket me-1"></i> Publish</button>
-                    </div>
+
+                    @if($article)
+                        <div class="mb-2">
+                            <span class="badge {{ $article->statusBadgeClass() }}">{{ $article->statusLabel() }}</span>
+                            @if($article->submitted_at)
+                                <small class="text-muted d-block mt-1"><x-time-ago :date="$article->submitted_at" prefix="Submitted " /></small>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if($article && $article->isRejected() && $article->review_note)
+                        <div class="alert alert-danger py-2 px-3 small mb-3">
+                            <strong>Admin feedback:</strong> {{ $article->review_note }}
+                        </div>
+                    @elseif($article && $article->isPending())
+                        <div class="alert alert-info py-2 px-3 small mb-3">
+                            <i class="fa-solid fa-clock me-1"></i> This post is waiting for admin approval. It stays hidden from readers until then.
+                        </div>
+                    @elseif($article && $article->isPublished())
+                        <div class="alert alert-success py-2 px-3 small mb-3">
+                            <i class="fa-solid fa-check-circle me-1"></i> This post is live.
+                        </div>
+                    @endif
+
+                    @if($article && $article->isPublished())
+                        {{-- An already published post stays live when edited --}}
+                        <input type="hidden" name="status" value="published">
+                        <button type="submit" class="btn btn-success w-100"><i class="fa-solid fa-save me-1"></i> Save Changes</button>
+                    @else
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="status" value="draft" class="btn btn-outline-warning flex-fill"><i class="fa-solid fa-save me-1"></i> Save Draft</button>
+                            <button type="submit" name="status" value="pending" class="btn btn-primary flex-fill"><i class="fa-solid fa-paper-plane me-1"></i> Submit for Review</button>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="fa-solid fa-shield-halved me-1"></i>Posts go live only after an admin approves them.
+                        </small>
+                    @endif
+                    @error('status') <div class="text-danger small mt-2">{{ $message }}</div> @enderror
                 </div>
             </div>
 

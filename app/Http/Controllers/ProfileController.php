@@ -19,8 +19,18 @@ class ProfileController extends Controller
      */
     public function show(): View
     {
+        $user = Auth::user();
+
+        // Authors this user follows, newest follow first.
+        $following = $user->follows()
+            ->withCount(['articles', 'followers'])
+            ->orderByDesc('follows.created_at')
+            ->paginate(12);
+
         return view('pages.profile-settings', [
-            'user' => Auth::user(),
+            'user' => $user,
+            'following' => $following,
+            'followingTotal' => $user->follows()->count(),
         ]);
     }
 

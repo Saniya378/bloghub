@@ -31,6 +31,7 @@ class ToggleController extends Controller
         }
 
         return response()->json([
+            'success' => true,
             'liked' => $isLiked,
             'likes' => $article->fresh()->likes,
         ]);
@@ -55,6 +56,7 @@ class ToggleController extends Controller
         }
 
         return response()->json([
+            'success' => true,
             'bookmarked' => $isBookmarked,
         ]);
     }
@@ -83,6 +85,7 @@ class ToggleController extends Controller
         }
 
         return response()->json([
+            'success' => true,
             'following' => $isFollowing,
             'followers' => $author->followers()->count(),
         ]);

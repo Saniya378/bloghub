@@ -1,8 +1,11 @@
 @props(['article', 'layout' => 'grid'])
 
 @php
+$author = $article->user;
+$authorName = $author?->name ?? 'Unknown author';
+$authorUrl = $author?->profileUrl();
 $imageUrl = $article->image ?? 'https://picsum.photos/seed/' . $article->slug . '/800/500';
-$avatarUrl = $article->user->avatar ?? 'https://i.pravatar.cc/100?img=1';
+$avatarUrl = $author?->avatar ?? 'https://i.pravatar.cc/100?img=1';
 $articleUrl = url('/blogs/' . $article->slug);
 $categoryUrl = url('/blogs?category=' . $article->category_slug);
 @endphp
@@ -17,7 +20,7 @@ $categoryUrl = url('/blogs?category=' . $article->category_slug);
         <div class="bh-card-overlay">
             <span class="bh-badge bh-badge-accent mb-2">{{ ucfirst($article->category_slug) }}</span>
             <h3 class="h4 fw-bold text-white mb-1">{{ $article->title }}</h3>
-            <span class="bh-caption" style="color: rgba(255, 255, 255, 0.85);">{{ $article->user->name }} &bull; {{ $article->reading_time }}</span>
+            <span class="bh-caption" style="color: rgba(255, 255, 255, 0.85);">{{ $authorName }} &bull; {{ $article->reading_time }}</span>
         </div>
     </a>
 </article>
@@ -35,7 +38,7 @@ $categoryUrl = url('/blogs?category=' . $article->category_slug);
             </h3>
             <p class="bh-card-text mb-2" style="font-size: 0.875rem;">{{ Str::limit($article->excerpt, 90) }}</p>
             <div class="bh-card-meta mb-0 pt-2 mt-auto" style="border-top: 1px solid var(--color-border-subtle);">
-                <span>{{ $article->user->name }}</span>
+                <span>{{ $authorName }}</span>
                 <span class="ms-auto">{{ $article->reading_time }}</span>
             </div>
         </div>
@@ -59,11 +62,18 @@ $categoryUrl = url('/blogs?category=' . $article->category_slug);
         </h3>
         <p class="bh-card-text">{{ Str::limit($article->excerpt, 100) }}</p>
         <div class="bh-card-meta mb-0 pt-3 mt-auto" style="border-top: 1px solid var(--color-border-subtle);">
-            <a href="{{ route('authors.show', $article->user->username) }}" class="d-flex align-items-center gap-2 text-decoration-none" style="color: inherit;">
-                <img src="{{ $avatarUrl }}" alt="{{ $article->user->name }}" width="28" height="28" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover;" loading="lazy" onerror="this.onerror=null;this.src='{{ asset('images/avatar-placeholder.svg') }}'">
-                <span class="fw-semibold" style="color: var(--color-primary);">{{ $article->user->name }}</span>
+            @if($authorUrl)
+            <a href="{{ $authorUrl }}" class="d-flex align-items-center gap-2 text-decoration-none" style="color: inherit;">
+                <img src="{{ $avatarUrl }}" alt="{{ $authorName }}" width="28" height="28" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover;" loading="lazy" onerror="this.onerror=null;this.src='{{ asset('images/avatar-placeholder.svg') }}'">
+                <span class="fw-semibold" style="color: var(--color-primary);">{{ $authorName }}</span>
             </a>
-            <span class="ms-auto">{{ $article->published_at->diffForHumans() }}</span>
+            @else
+            <span class="d-flex align-items-center gap-2">
+                <img src="{{ $avatarUrl }}" alt="{{ $authorName }}" width="28" height="28" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover;" loading="lazy" onerror="this.onerror=null;this.src='{{ asset('images/avatar-placeholder.svg') }}'">
+                <span class="fw-semibold" style="color: var(--color-primary);">{{ $authorName }}</span>
+            </span>
+            @endif
+            <x-time-ago :date="$article->published_at" class="ms-auto" />
         </div>
     </div>
 </article>

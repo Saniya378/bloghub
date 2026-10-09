@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Article;
 use App\Models\Comment;
 use App\Models\ContactMessage;
@@ -29,6 +30,7 @@ class AdminController extends Controller
             'posts' => Article::count(),
             'published' => Article::published()->count(),
             'drafts' => Article::draft()->count(),
+            'pending_posts' => Article::pending()->count(),
             'pending_comments' => Comment::where('status', 'pending')->count(),
             'subscribers' => NewsletterSubscriber::count(),
             'unread_messages' => ContactMessage::where('is_read', false)->count(),
@@ -84,6 +86,8 @@ class AdminController extends Controller
 
         $user->update(['role' => $request->input('role')]);
 
+        ActivityLog::log('Updated', 'User', "Admin changed role of user {$user->name} to {$request->input('role')}", $user);
+
         return back()->with('success', "Role updated for {$user->name}.");
     }
 
@@ -102,6 +106,8 @@ class AdminController extends Controller
         $user->update(['is_active' => !$user->is_active]);
 
         $status = $user->is_active ? 'activated' : 'deactivated';
+        ActivityLog::log($user->is_active ? 'Activated' : 'Blocked', 'User', "Admin {$status} account for {$user->name}", $user);
+
         return back()->with('success', "User {$user->name} has been {$status}.");
     }
 
@@ -110,7 +116,7 @@ class AdminController extends Controller
      */
     public function posts(Request $request): View
     {
-        $query = Article::with(['user'])->withCount('comments');
+        $query = Article::with(['user', 'reviewer'])->withCount('comments');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -131,6 +137,56 @@ class AdminController extends Controller
     }
 
     /**
+     * Approve a post that is waiting for review and publish it.
+     */
+    public function approvePost(Request $request, int $id): RedirectResponse
+    {
+        $post = Article::findOrFail($id);
+
+        if (!$post->isPending()) {
+            return back()->with('error', "\"{$post->title}\" is not waiting for review.");
+        }
+
+        $validator = Validator::make($request->all(), [
+            'review_note' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator);
+        }
+
+        $post->approve(auth()->user(), $request->input('review_note'));
+
+        return back()->with('success', "\"{$post->title}\" has been approved and published.");
+    }
+
+    /**
+     * Reject a post and send it back to the author with a reason.
+     */
+    public function rejectPost(Request $request, int $id): RedirectResponse
+    {
+        $post = Article::findOrFail($id);
+
+        if (!$post->isPending()) {
+            return back()->with('error', "\"{$post->title}\" is not waiting for review.");
+        }
+
+        $validator = Validator::make($request->all(), [
+            'review_note' => 'required|string|max:1000',
+        ], [
+            'review_note.required' => 'Please tell the author why the post was rejected.',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator);
+        }
+
+        $post->reject(auth()->user(), $request->input('review_note'));
+
+        return back()->with('success', "\"{$post->title}\" was rejected and sent back to the author.");
+    }
+
+    /**
      * Toggle featured status.
      */
     public function toggleFeatured(int $id): RedirectResponse
@@ -139,6 +195,8 @@ class AdminController extends Controller
         $post->update(['is_featured' => !$post->is_featured]);
 
         $status = $post->is_featured ? 'featured' : 'unfeatured';
+        ActivityLog::log('Updated', 'Article', "Admin marked post \"{$post->title}\" as {$status}", $post);
+
         return back()->with('success', "Post \"{$post->title}\" has been {$status}.");
     }
 
@@ -150,6 +208,8 @@ class AdminController extends Controller
         $post = Article::findOrFail($id);
         $post->update(['status' => 'draft']);
 
+        ActivityLog::log('Updated', 'Article', "Admin unpublished article \"{$post->title}\"", $post);
+
         return back()->with('success', "Post \"{$post->title}\" has been unpublished.");
     }
 
@@ -159,9 +219,12 @@ class AdminController extends Controller
     public function deletePost(int $id): RedirectResponse
     {
         $post = Article::findOrFail($id);
+        $title = $post->title;
         $post->delete();
 
-        return back()->with('success', "Post \"{$post->title}\" has been deleted.");
+        ActivityLog::log('Deleted', 'Article', "Admin deleted article \"{$title}\"");
+
+        return back()->with('success', "Post \"{$title}\" has been deleted.");
     }
 
     /**
@@ -169,7 +232,7 @@ class AdminController extends Controller
      */
     public function categories(): View
     {
-        $categories = \App\Models\Category::orderBy('name')->get();
+        $categories = \App\Models\Category::withCount('articles')->orderBy('name')->get();
         return view('pages.admin.categories', compact('categories'));
     }
 
@@ -189,7 +252,8 @@ class AdminController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        \App\Models\Category::create($validator->validated());
+        $category = \App\Models\Category::create($validator->validated());
+        ActivityLog::log('Created', 'Category', "Admin created category \"{$category->name}\"", $category);
 
         return back()->with('success', 'Category created successfully.');
     }
@@ -213,6 +277,7 @@ class AdminController extends Controller
         }
 
         $category->update($validator->validated());
+        ActivityLog::log('Updated', 'Category', "Admin updated category \"{$category->name}\"", $category);
 
         return back()->with('success', 'Category updated successfully.');
     }
@@ -223,7 +288,10 @@ class AdminController extends Controller
     public function deleteCategory(int $id): RedirectResponse
     {
         $category = \App\Models\Category::findOrFail($id);
+        $name = $category->name;
         $category->delete();
+
+        ActivityLog::log('Deleted', 'Category', "Admin deleted category \"{$name}\"");
 
         return back()->with('success', 'Category deleted successfully.');
     }
@@ -233,7 +301,8 @@ class AdminController extends Controller
      */
     public function comments(Request $request): View
     {
-        $query = Comment::with(['user', 'article']);
+        $query = Comment::with(['user', 'article', 'parent' => fn ($q) => $q->with('user:id,name')])
+            ->withCount('replies');
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -252,18 +321,31 @@ class AdminController extends Controller
         $comment = Comment::findOrFail($id);
         $comment->update(['status' => 'approved']);
 
+        ActivityLog::log('Approved', 'Comment', "Admin approved comment on \"{$comment->article?->title}\"", $comment);
+
         return back()->with('success', 'Comment approved.');
     }
 
     /**
-     * Delete comment.
+     * Delete comment, together with every reply nested under it.
      */
     public function deleteComment(int $id): RedirectResponse
     {
         $comment = Comment::findOrFail($id);
+        $replies = count($comment->descendantIds());
+        $articleTitle = $comment->article?->title ?? 'Post';
+
         $comment->delete();
 
-        return back()->with('success', 'Comment deleted.');
+        if ($comment->article) {
+            $comment->article->decrement('comment_count', $replies + 1);
+        }
+
+        ActivityLog::log('Deleted', 'Comment', "Admin deleted comment on \"{$articleTitle}\"");
+
+        return back()->with('success', $replies > 0
+            ? "Comment and {$replies} repl" . ($replies === 1 ? 'y' : 'ies') . ' deleted.'
+            : 'Comment deleted.');
     }
 
     /**

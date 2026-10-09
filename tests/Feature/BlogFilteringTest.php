@@ -223,8 +223,8 @@ class BlogFilteringTest extends TestCase
         $response = $this->get('/blogs?sort=popular');
 
         $response->assertStatus(200);
-        // Popular article should appear first
-        $this->assertGreaterThan(
+        // Popular article should appear first (smaller string position in HTML)
+        $this->assertLessThan(
             strpos($response->getContent(), 'Unpopular Article'),
             strpos($response->getContent(), 'Popular Article')
         );

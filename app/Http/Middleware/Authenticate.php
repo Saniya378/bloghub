@@ -10,24 +10,43 @@ use Symfony\Component\HttpFoundation\Response;
 class Authenticate
 {
     /**
-     * Redirect unauthenticated users to login.
+     * Redirect unauthenticated users or return JSON for APIs.
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string ...$guards): Response
     {
-        if (!Auth::check()) {
+        $guard = empty($guards) ? null : $guards[0];
+        $authGuard = Auth::guard($guard);
+
+        if (!$authGuard->check()) {
             if ($request->expectsJson()) {
-                return response()->json(['error' => 'Unauthenticated.'], 401);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated.',
+                ], 401);
             }
             return redirect('/login')->with('error', 'Please sign in to access this page.');
         }
 
+        $user = $authGuard->user();
+
+        // Set the active guard and user resolver for the request
+        if ($guard) {
+            Auth::shouldUse($guard);
+            $request->setUserResolver(fn ($g = null) => Auth::guard($g ?? $guard)->user());
+        }
+
         // Check if user account is still active
-        if (!Auth::user()->isActive()) {
-            Auth::logout();
-            $request->session()->invalidate();
+        if ($user && method_exists($user, 'isActive') && !$user->isActive()) {
+            if ($guard === 'web' || empty($guard)) {
+                Auth::logout();
+                $request->session()->invalidate();
+            }
             
             if ($request->expectsJson()) {
-                return response()->json(['error' => 'Account deactivated.'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Account deactivated.',
+                ], 403);
             }
             return redirect('/login')->with('error', 'Your account has been deactivated.');
         }

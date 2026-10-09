@@ -4099,3 +4099,230 @@ table {
   height: 100%;
   object-fit: cover;
 }
+
+/* --------------------------------------------------------------------------
+    41. Threaded Comments (nested replies + likes)
+    -------------------------------------------------------------------------- */
+.bh-comment {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.bh-comment:last-child {
+  border-bottom: 0;
+}
+
+.bh-comment__actions {
+  gap: 0.25rem 1rem;
+}
+
+.bh-comment__actions .btn-link {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--color-text-muted);
+  transition: color 0.2s ease;
+}
+
+.bh-comment__actions .btn-link:hover {
+  color: var(--color-primary);
+}
+
+/* Like state */
+.bh-comment-like {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.bh-comment-like i {
+  transition: transform 0.2s ease;
+}
+
+.bh-comment-like:hover i {
+  color: var(--color-accent);
+}
+
+.bh-comment-like.is-liked {
+  color: var(--color-accent);
+}
+
+.bh-comment-like.is-liked i {
+  animation: bh-comment-heart 0.35s ease;
+}
+
+.bh-comment-like__count {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes bh-comment-heart {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* Nested replies */
+.bh-comment__replies {
+  margin-top: 0.5rem;
+  margin-left: 0.75rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-border-subtle);
+}
+
+.bh-comment__replies .bh-comment:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.bh-comment__replies--deep {
+  border-left-style: dotted;
+}
+
+.bh-comment__more {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+.bh-comment__more:hover {
+  color: var(--color-accent);
+}
+
+.bh-comment__more i {
+  transition: transform 0.2s ease;
+}
+
+.bh-comment-reply-form textarea {
+  background-color: var(--color-surface-subtle);
+  border-color: var(--color-border);
+}
+
+.bh-comment.is-replying {
+  background-color: var(--color-primary-subtle);
+  border-radius: var(--border-radius);
+  padding-left: 0.5rem;
+}
+
+/* Deep-linked comment arriving from a notification or favourites page */
+.bh-comment--highlighted {
+  animation: bh-comment-flash 2.5s ease;
+}
+
+@keyframes bh-comment-flash {
+  0%,
+  60% {
+    background-color: var(--color-accent-subtle, #FDF1ED);
+    box-shadow: inset 3px 0 0 var(--color-accent, #C8461F);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bh-comment--highlighted {
+    animation: none;
+    background-color: var(--color-accent-subtle, #FDF1ED);
+    box-shadow: inset 3px 0 0 var(--color-accent, #C8461F);
+  }
+}
+
+/* --------------------------------------------------------------------------
+    42. Live Relative Timestamps
+    Rendered server side by <x-time-ago> and kept ticking by relative-time.js
+    -------------------------------------------------------------------------- */
+.bh-time-ago {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+
+/* Avoid a layout shift when the label grows ("9 sec ago" -> "10 sec ago") */
+.bh-time-ago[data-timestamp] {
+  display: inline-block;
+  min-width: 4.5em;
+}
+
+/* --------------------------------------------------------------------------
+    43. Live Article Feed (new posts appended without a reload)
+    -------------------------------------------------------------------------- */
+.live-feed-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background: var(--color-accent-subtle, #FDF1ED);
+  color: var(--color-accent, #C8461F);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  animation: bh-live-slide-in 0.3s ease;
+}
+
+.live-feed-banner:hover {
+  background: var(--color-accent, #C8461F);
+  color: #fff;
+}
+
+@keyframes bh-live-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Newly injected cards get a brief accent glow */
+.live-feed-new {
+  animation: bh-live-card 2.4s ease;
+}
+
+@keyframes bh-live-card {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    box-shadow: 0 0 0 3px var(--color-accent, #C8461F);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: 0 0 0 3px var(--color-accent, #C8461F);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-feed-banner,
+  .live-feed-new {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+    44. "Authors You Follow" list on the profile page
+    -------------------------------------------------------------------------- */
+.bh-following-item {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--border-radius, 6px);
+  background: var(--color-surface-subtle, #F4F1EA);
+  height: 100%;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bh-following-item:hover {
+  border-color: var(--color-primary-subtle, rgba(31, 42, 68, 0.08));
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}

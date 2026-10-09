@@ -43,7 +43,7 @@
                         <span class="badge bg-warning">Unread</span>
                         @endif
                     </td>
-                    <td>{{ $message->created_at->diffForHumans() }}</td>
+                    <td><x-time-ago :date="$message->created_at" /></td>
                     <td>
                         <div class="d-flex gap-2">
                             @if(!$message->is_read)

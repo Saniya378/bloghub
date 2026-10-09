@@ -79,10 +79,16 @@ const ToggleActions = (function() {
         }
 
         try {
-            const response = await fetch(`/articles/${id}/${action}`, {
+            // Follows are scoped to authors, everything else to articles.
+            const url = action === 'follow'
+                ? `/authors/${id}/follow`
+                : `/articles/${id}/${action}`;
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': window.csrfToken
                 }
             });
@@ -91,6 +97,26 @@ const ToggleActions = (function() {
 
             if (!response.ok) {
                 throw new Error(data.error || 'Request failed');
+            }
+
+            // Roll the optimistic state back if the server disagreed
+            if (data.liked !== undefined) {
+                const isActive = !!data.liked;
+                icon?.classList.toggle('fa-solid', isActive);
+                icon?.classList.toggle('fa-regular', !isActive);
+                button?.setAttribute?.('aria-pressed', String(isActive));
+            }
+            if (data.bookmarked !== undefined) {
+                const isActive = !!data.bookmarked;
+                icon?.classList.toggle('fa-solid', isActive);
+                icon?.classList.toggle('fa-regular', !isActive);
+                button?.setAttribute?.('aria-pressed', String(isActive));
+            }
+            if (data.following !== undefined) {
+                const isActive = !!data.following;
+                icon?.classList.toggle('fa-solid', isActive);
+                icon?.classList.toggle('fa-regular', !isActive);
+                button?.setAttribute?.('aria-pressed', String(isActive));
             }
 
             // Update with server response

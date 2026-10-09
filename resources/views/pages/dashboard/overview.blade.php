@@ -32,6 +32,24 @@
     <div class="col-md-4 col-lg-2">
         <div class="card">
             <div class="card-body text-center">
+                <div class="display-6 fw-bold text-secondary">{{ $stats['pending'] }}</div>
+                <small class="text-muted">In Review</small>
+            </div>
+        </div>
+    </div>
+    @if($stats['rejected'] > 0)
+    <div class="col-md-4 col-lg-2">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <div class="display-6 fw-bold text-danger">{{ $stats['rejected'] }}</div>
+                <small class="text-muted">Rejected</small>
+            </div>
+        </div>
+    </div>
+    @endif
+    <div class="col-md-4 col-lg-2">
+        <div class="card">
+            <div class="card-body text-center">
                 <div class="display-6 fw-bold text-info">{{ number_format($stats['total_views']) }}</div>
                 <small class="text-muted">Views</small>
             </div>

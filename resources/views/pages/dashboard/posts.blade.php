@@ -19,6 +19,8 @@
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
                     <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>In Review</option>
+                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                     <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
                 </select>
             </div>
@@ -53,12 +55,18 @@
                             <div>
                                 <div class="fw-semibold">{{ Str::limit($post->title, 40) }}</div>
                                 <small class="text-muted">{{ $post->reading_time }}</small>
+                                @if($post->isRejected() && $post->review_note)
+                                    <small class="text-danger d-block mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i>{{ Str::limit($post->review_note, 70) }}</small>
+                                @endif
                             </div>
                         </div>
                     </td>
                     <td><span class="badge bg-light text-dark">{{ ucfirst($post->category_slug) }}</span></td>
                     <td>
-                        <span class="badge {{ $post->status === 'published' ? 'bg-success' : 'bg-warning' }}">{{ ucfirst($post->status) }}</span>
+                        <span class="badge {{ $post->statusBadgeClass() }}">{{ $post->statusLabel() }}</span>
+                        @if($post->isPending() && $post->submitted_at)
+                            <small class="text-muted d-block mt-1"><x-time-ago :date="$post->submitted_at" prefix="Sent " /></small>
+                        @endif
                     </td>
                     <td>{{ number_format($post->views) }}</td>
                     <td>{{ $post->comments_count }}</td>

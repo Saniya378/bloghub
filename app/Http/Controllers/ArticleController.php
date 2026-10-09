@@ -49,6 +49,28 @@ class ArticleController extends Controller
 
         $posts = $query->paginate(9);
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'data' => $posts->map(function ($post) {
+                    return [
+                        'id' => $post->id,
+                        'title' => $post->title,
+                        'slug' => $post->slug,
+                        'excerpt' => $post->excerpt,
+                        'category' => $post->category_slug,
+                        'author' => $post->user?->name ?? 'Unknown',
+                        'date' => $post->published_at ? $post->published_at->format('M d, Y') : $post->created_at->format('M d, Y'),
+                    ];
+                }),
+                'meta' => [
+                    'current_page' => $posts->currentPage(),
+                    'last_page' => $posts->lastPage(),
+                    'per_page' => $posts->perPage(),
+                    'total' => $posts->total(),
+                ],
+            ]);
+        }
+
         // Only categories that really exist in published articles
         $categories = Article::published()->distinct()->orderBy('category_slug')->pluck('category_slug');
 
@@ -57,6 +79,9 @@ class ArticleController extends Controller
 
     /**
      * Store a newly created article.
+     *
+     * Status is limited to draft/pending: publishing always goes
+     * through admin review.
      */
     public function store(Request $request): \Illuminate\Http\JsonResponse|RedirectResponse
     {
@@ -67,7 +92,7 @@ class ArticleController extends Controller
             'category_slug' => 'required|string|in:technology,education,travel,food,business,sports,health,lifestyle,finance,science,art,culture',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
-            'status' => 'required|in:draft,published',
+            'status' => 'required|in:draft,pending',
         ]);
 
         if ($validator->fails()) {
@@ -77,6 +102,8 @@ class ArticleController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
+        $status = $request->input('status');
+
         $article = Article::create([
             'user_id' => Auth::id(),
             'title' => $request->input('title'),
@@ -85,19 +112,25 @@ class ArticleController extends Controller
             'content' => $request->input('content'),
             'category_slug' => $request->input('category_slug'),
             'tags' => $request->input('tags', []),
-            'status' => $request->input('status'),
-            'published_at' => $request->input('status') === 'published' ? now() : null,
+            'status' => $status,
+            'published_at' => null,
+            'submitted_at' => $status === Article::STATUS_PENDING ? now() : null,
         ]);
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'article' => $article], 201);
         }
 
-        return back()->with('success', 'Article created successfully.');
+        return back()->with('success', $status === Article::STATUS_PENDING
+            ? 'Post sent to the admin for review.'
+            : 'Article saved as draft.');
     }
 
     /**
      * Update the specified article.
+     *
+     * An author can never publish here: that only happens when an
+     * admin approves the post.
      */
     public function update(Request $request, int $id): \Illuminate\Http\JsonResponse|RedirectResponse
     {
@@ -117,7 +150,7 @@ class ArticleController extends Controller
             'content' => 'sometimes|required|string',
             'category_slug' => 'sometimes|required|string|in:technology,education,travel,food,business,sports,health,lifestyle,finance,science,art,culture',
             'tags' => 'nullable|array',
-            'status' => 'sometimes|in:draft,published',
+            'status' => 'sometimes|in:draft,pending',
         ]);
 
         if ($validator->fails()) {
@@ -127,10 +160,33 @@ class ArticleController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        $article->update($validator->validated());
+        $data = $validator->validated();
+        $requestedStatus = $data['status'] ?? null;
+        unset($data['status']);
+
+        $wasPending = $article->isPending();
+
+        if ($requestedStatus !== null) {
+            $data['status'] = $requestedStatus;
+
+            // (Re)submitting for review clears the previous admin decision
+            if ($requestedStatus === Article::STATUS_PENDING) {
+                $data['submitted_at'] = $wasPending ? $article->submitted_at : now();
+                $data['reviewed_at'] = null;
+                $data['reviewed_by'] = null;
+                $data['review_note'] = null;
+            } elseif ($wasPending) {
+                // Pulling back to draft withdraws it from the review queue
+                $data['reviewed_at'] = null;
+                $data['reviewed_by'] = null;
+                $data['review_note'] = null;
+            }
+        }
+
+        $article->update($data);
 
         if ($request->expectsJson()) {
-            return response()->json(['success' => true, 'article' => $article]);
+            return response()->json(['success' => true, 'article' => $article->fresh()]);
         }
 
         return back()->with('success', 'Article updated successfully.');

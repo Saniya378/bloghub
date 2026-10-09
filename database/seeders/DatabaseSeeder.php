@@ -20,10 +20,15 @@ class DatabaseSeeder extends Seeder
         $this->seedComments();
         $this->seedLikesBookmarksFollows();
         $this->seedTestimonials();
+        $this->call(ActivityLogSeeder::class);
     }
 
     private function seedUsers(): void
     {
+        if (User::where('email', 'admin@bloghub.com')->exists()) {
+            return;
+        }
+
         $usedUsernames = User::pluck('username')->filter()->all();
 
         $uniqueUsername = function (string $name) use (&$usedUsernames): string {

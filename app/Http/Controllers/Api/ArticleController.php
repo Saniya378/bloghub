@@ -1,0 +1,479 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Article;
+use App\Models\Category;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+
+class ArticleController extends Controller
+{
+    /**
+     * Display a paginated listing of articles with advanced filters.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = Article::with(['user:id,name,username,avatar,role'])
+            ->published()
+            ->withCount('comments');
+
+        // Search in title, excerpt, content
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('excerpt', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        // Category filter (slug or id)
+        if ($request->filled('category')) {
+            $query->where('category_slug', $request->input('category'));
+        }
+
+        // Tag filter
+        if ($request->filled('tag')) {
+            $tag = $request->input('tag');
+            $query->whereJsonContains('tags', $tag);
+        }
+
+        // Author filter
+        if ($request->filled('author_id')) {
+            $query->where('user_id', $request->input('author_id'));
+        } elseif ($request->filled('author')) {
+            $username = $request->input('author');
+            $query->whereHas('user', function ($q) use ($username) {
+                $q->where('username', $username);
+            });
+        }
+
+        // Featured only
+        if ($request->boolean('featured')) {
+            $query->where('is_featured', true);
+        }
+
+        // Sorting
+        $sort = $request->input('sort', 'newest');
+        match ($sort) {
+            'oldest' => $query->oldest('published_at'),
+            'popular' => $query->orderByDesc('views'),
+            'likes' => $query->orderByDesc('likes'),
+            'comments' => $query->orderByDesc('comments_count'),
+            default => $query->latest('published_at'),
+        };
+
+        $perPage = min(max((int) $request->input('per_page', 10), 1), 50);
+        $articles = $query->paginate($perPage);
+
+        // Enhance with auth user interaction flags if logged in
+        $userId = Auth::guard('sanctum')->id();
+        if ($userId) {
+            $user = Auth::guard('sanctum')->user();
+            $likedArticleIds = $user->articleLikes()->pluck('article_id')->toArray();
+            $bookmarkedArticleIds = $user->bookmarks()->pluck('article_id')->toArray();
+
+            $articles->getCollection()->transform(function ($article) use ($likedArticleIds, $bookmarkedArticleIds) {
+                $article->is_liked = in_array($article->id, $likedArticleIds, true);
+                $article->is_bookmarked = in_array($article->id, $bookmarkedArticleIds, true);
+                return $article;
+            });
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $articles->items(),
+            'pagination' => [
+                'current_page' => $articles->currentPage(),
+                'last_page' => $articles->lastPage(),
+                'per_page' => $articles->perPage(),
+                'total' => $articles->total(),
+                'has_more' => $articles->hasMorePages(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get live feed of latest articles after a specific timestamp or ID.
+     */
+    public function feed(Request $request): JsonResponse
+    {
+        $after = $request->input('after'); // ISO timestamp or cursor
+
+        $query = Article::with(['user:id,name,username,avatar'])
+            ->published()
+            ->latest('published_at');
+
+        if ($after) {
+            $query->where('published_at', '>', $after);
+        }
+
+        $articles = $query->limit(10)->get();
+
+        return response()->json([
+            'success' => true,
+            'count' => $articles->count(),
+            'data' => $articles,
+        ]);
+    }
+
+    /**
+     * Get featured and trending articles for hero/carousel sections.
+     */
+    public function highlights(): JsonResponse
+    {
+        $featured = Article::with(['user:id,name,username,avatar'])
+            ->published()
+            ->where('is_featured', true)
+            ->latest('published_at')
+            ->limit(5)
+            ->get();
+
+        $trending = Article::with(['user:id,name,username,avatar'])
+            ->published()
+            ->orderByDesc('views')
+            ->limit(5)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'featured' => $featured,
+                'trending' => $trending,
+            ],
+        ]);
+    }
+
+    /**
+     * Show single article detail by slug or ID with relations & related posts.
+     */
+    public function show(string $identifier): JsonResponse
+    {
+        $article = Article::with([
+            'user:id,name,username,avatar,role,bio,specialty,tagline',
+            'comments' => function ($q) {
+                $q->whereNull('parent_id')
+                    ->with(['user:id,name,username,avatar', 'replies.user:id,name,username,avatar'])
+                    ->latest();
+            },
+        ])
+            ->where(function ($q) use ($identifier) {
+                if (is_numeric($identifier)) {
+                    $q->where('id', $identifier);
+                } else {
+                    $q->where('slug', $identifier);
+                }
+            })
+            ->first();
+
+        if (!$article) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article not found.',
+            ], 404);
+        }
+
+        // Increment view count safely
+        $article->increment('views');
+
+        // Check user interaction state
+        $user = Auth::guard('sanctum')->user();
+        $isLiked = false;
+        $isBookmarked = false;
+        $isFollowingAuthor = false;
+
+        if ($user) {
+            $isLiked = $user->articleLikes()->where('article_id', $article->id)->exists();
+            $isBookmarked = $user->bookmarks()->where('article_id', $article->id)->exists();
+            $isFollowingAuthor = $user->follows()->where('author_id', $article->user_id)->exists();
+        }
+
+        // Related articles in same category
+        $related = Article::published()
+            ->where('id', '!=', $article->id)
+            ->where('category_slug', $article->category_slug)
+            ->with(['user:id,name,username,avatar'])
+            ->latest('published_at')
+            ->limit(4)
+            ->get();
+
+        $data = $article->toArray();
+        $data['is_liked'] = $isLiked;
+        $data['is_bookmarked'] = $isBookmarked;
+        $data['is_following_author'] = $isFollowingAuthor;
+        $data['related_articles'] = $related;
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+
+    /**
+     * Create a new article.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'excerpt' => 'nullable|string|max:500',
+            'content' => 'required|string',
+            'category_slug' => 'required|string|max:100',
+            'tags' => 'nullable',
+            'image' => 'nullable|image|max:5120', // max 5MB
+            'image_url' => 'nullable|url',
+            'status' => 'nullable|in:draft,pending,published',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // Generate slug
+        $baseSlug = Str::slug($request->input('title'));
+        $slug = $baseSlug;
+        $counter = 1;
+        while (Article::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        // Handle Image
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('articles', 'public');
+            $imagePath = '/storage/' . $imagePath;
+        } elseif ($request->filled('image_url')) {
+            $imagePath = $request->input('image_url');
+        }
+
+        // Parse tags
+        $tags = $request->input('tags');
+        if (is_string($tags)) {
+            $tags = array_map('trim', explode(',', $tags));
+        }
+
+        // Reading time calculation (avg 200 words per minute)
+        $wordCount = str_word_count(strip_tags($request->input('content')));
+        $readingTime = max(1, ceil($wordCount / 200));
+
+        // Determine status based on role
+        $requestedStatus = $request->input('status', Article::STATUS_PUBLISHED);
+        $status = ($user->role === 'admin' || $requestedStatus === Article::STATUS_DRAFT)
+            ? $requestedStatus
+            : Article::STATUS_PUBLISHED;
+
+        $article = Article::create([
+            'user_id' => $user->id,
+            'title' => $request->input('title'),
+            'slug' => $slug,
+            'excerpt' => $request->input('excerpt') ?: Str::limit(strip_tags($request->input('content')), 150),
+            'content' => $request->input('content'),
+            'category_slug' => $request->input('category_slug'),
+            'tags' => $tags ?: [],
+            'image' => $imagePath,
+            'reading_time' => $readingTime,
+            'status' => $status,
+            'published_at' => $status === Article::STATUS_PUBLISHED ? now() : null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Article created successfully.',
+            'data' => $article->load('user:id,name,username,avatar'),
+        ], 201);
+    }
+
+    /**
+     * Update an existing article.
+     */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $article = Article::find($id);
+
+        if (!$article) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article not found.',
+            ], 404);
+        }
+
+        $user = $request->user();
+
+        // Check permission
+        if ($article->user_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to edit this article.',
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'sometimes|required|string|max:255',
+            'excerpt' => 'nullable|string|max:500',
+            'content' => 'sometimes|required|string',
+            'category_slug' => 'sometimes|required|string|max:100',
+            'tags' => 'nullable',
+            'image' => 'nullable|image|max:5120',
+            'image_url' => 'nullable|url',
+            'status' => 'nullable|in:draft,pending,published',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $data = $request->only(['title', 'excerpt', 'content', 'category_slug', 'status']);
+
+        if ($request->filled('title') && $request->input('title') !== $article->title) {
+            $baseSlug = Str::slug($request->input('title'));
+            $slug = $baseSlug;
+            $counter = 1;
+            while (Article::where('slug', $slug)->where('id', '!=', $article->id)->exists()) {
+                $slug = $baseSlug . '-' . $counter;
+                $counter++;
+            }
+            $data['slug'] = $slug;
+        }
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('articles', 'public');
+            $data['image'] = '/storage/' . $imagePath;
+        } elseif ($request->filled('image_url')) {
+            $data['image'] = $request->input('image_url');
+        }
+
+        if ($request->has('tags')) {
+            $tags = $request->input('tags');
+            $data['tags'] = is_string($tags) ? array_map('trim', explode(',', $tags)) : $tags;
+        }
+
+        if ($request->filled('content')) {
+            $wordCount = str_word_count(strip_tags($request->input('content')));
+            $data['reading_time'] = max(1, ceil($wordCount / 200));
+        }
+
+        if (isset($data['status']) && $data['status'] === Article::STATUS_PUBLISHED && !$article->published_at) {
+            $data['published_at'] = now();
+        }
+
+        $article->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Article updated successfully.',
+            'data' => $article->fresh()->load('user:id,name,username,avatar'),
+        ]);
+    }
+
+    /**
+     * Delete an article.
+     */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $article = Article::find($id);
+
+        if (!$article) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article not found.',
+            ], 404);
+        }
+
+        $user = $request->user();
+
+        if ($article->user_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to delete this article.',
+            ], 403);
+        }
+
+        $article->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Article deleted successfully.',
+        ]);
+    }
+
+    /**
+     * Toggle like on an article.
+     */
+    public function toggleLike(Request $request, int $id): JsonResponse
+    {
+        $article = Article::find($id);
+
+        if (!$article) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article not found.',
+            ], 404);
+        }
+
+        $user = $request->user();
+        $liked = $user->articleLikes()->where('article_id', $id)->exists();
+
+        if ($liked) {
+            $user->articleLikes()->detach($id);
+            $article->decrement('likes');
+            $isLiked = false;
+        } else {
+            $user->articleLikes()->attach($id);
+            $article->increment('likes');
+            $isLiked = true;
+        }
+
+        return response()->json([
+            'success' => true,
+            'liked' => $isLiked,
+            'likes_count' => $article->fresh()->likes,
+        ]);
+    }
+
+    /**
+     * Toggle bookmark on an article.
+     */
+    public function toggleBookmark(Request $request, int $id): JsonResponse
+    {
+        $article = Article::find($id);
+
+        if (!$article) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article not found.',
+            ], 404);
+        }
+
+        $user = $request->user();
+        $bookmarked = $user->bookmarks()->where('article_id', $id)->exists();
+
+        if ($bookmarked) {
+            $user->bookmarks()->detach($id);
+            $isBookmarked = false;
+        } else {
+            $user->bookmarks()->attach($id);
+            $isBookmarked = true;
+        }
+
+        return response()->json([
+            'success' => true,
+            'bookmarked' => $isBookmarked,
+        ]);
+    }
+}

@@ -34,6 +34,11 @@
                     <span><strong>{{ $stats['published'] }}</strong> published</span>
                     <span><strong>{{ $stats['drafts'] }}</strong> drafts</span>
                 </div>
+                @if($stats['pending_posts'] > 0)
+                <a href="{{ route('admin.posts', ['status' => 'pending']) }}" class="btn btn-sm btn-primary w-100 mt-3">
+                    <i class="fa-solid fa-hourglass-half me-1"></i>Review {{ $stats['pending_posts'] }} request{{ $stats['pending_posts'] === 1 ? '' : 's' }}
+                </a>
+                @endif
             </div>
         </div>
     </div>
@@ -146,6 +151,17 @@
                 <div>
                     <h5 class="mb-1 text-dark">Newsletter Subscribers</h5>
                     <small class="text-muted">List and export CSV</small>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('admin.reports') }}" class="card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="fa-solid fa-chart-line fa-2x text-dark"></i>
+                <div>
+                    <h5 class="mb-1 text-dark">Reports</h5>
+                    <small class="text-muted">Growth over time, date ranges, CSV export</small>
                 </div>
             </div>
         </a>

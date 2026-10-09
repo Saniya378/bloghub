@@ -109,6 +109,12 @@
             width: 20px;
             text-align: center;
         }
+        .transition-icon {
+            transition: transform 0.2s ease;
+        }
+        [aria-expanded="true"] .transition-icon {
+            transform: rotate(180deg);
+        }
 
         /* Dark Mode Dashboard Overrides */
         [data-theme="dark"] .dashboard-sidebar {
@@ -191,6 +197,13 @@
             <a href="{{ route('admin.posts') }}" class="sidebar-link {{ request()->routeIs('admin.posts*') ? 'active' : '' }}">
                 <i class="fa-solid fa-file-lines"></i> Posts
             </a>
+            @php $pendingPosts = \App\Models\Article::pending()->count(); @endphp
+            @if($pendingPosts > 0)
+            <a href="{{ route('admin.posts', ['status' => 'pending']) }}" class="sidebar-link" style="color: var(--color-primary); font-weight: 600;">
+                <i class="fa-solid fa-hourglass-half"></i> Review Requests
+                <span class="badge bg-danger rounded-pill ms-auto">{{ $pendingPosts }}</span>
+            </a>
+            @endif
             <a href="{{ route('admin.categories') }}" class="sidebar-link {{ request()->routeIs('admin.categories*') ? 'active' : '' }}">
                 <i class="fa-solid fa-folder-open"></i> Categories
             </a>
@@ -210,6 +223,30 @@
             <a href="{{ route('admin.subscribers') }}" class="sidebar-link {{ request()->routeIs('admin.subscribers*') ? 'active' : '' }}">
                 <i class="fa-solid fa-newspaper"></i> Subscribers
             </a>
+            <a href="{{ route('admin.reports.index') }}" class="sidebar-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}" data-bs-toggle="collapse" data-bs-target="#reportsSubmenu" aria-expanded="{{ request()->routeIs('admin.reports*') ? 'true' : 'false' }}">
+                <i class="fa-solid fa-chart-line"></i> Reports
+                <i class="fa-solid fa-chevron-down ms-auto small transition-icon {{ request()->routeIs('admin.reports*') ? 'rotate-icon' : '' }}"></i>
+            </a>
+            <div class="collapse {{ request()->routeIs('admin.reports*') ? 'show' : '' }} ps-3" id="reportsSubmenu">
+                <a href="{{ route('admin.reports.index') }}" class="sidebar-link py-1 {{ request()->routeIs('admin.reports.index') ? 'active' : '' }}" style="font-size: 0.875rem;">
+                    <i class="fa-solid fa-chart-pie"></i> Overview
+                </a>
+                <a href="{{ route('admin.reports.authors') }}" class="sidebar-link py-1 {{ request()->routeIs('admin.reports.authors*') ? 'active' : '' }}" style="font-size: 0.875rem;">
+                    <i class="fa-solid fa-users"></i> Authors
+                </a>
+                <a href="{{ route('admin.reports.articles') }}" class="sidebar-link py-1 {{ request()->routeIs('admin.reports.articles*') ? 'active' : '' }}" style="font-size: 0.875rem;">
+                    <i class="fa-solid fa-newspaper"></i> Articles
+                </a>
+                <a href="{{ route('admin.reports.approvals.articles') }}" class="sidebar-link py-1 {{ request()->routeIs('admin.reports.approvals*') ? 'active' : '' }}" style="font-size: 0.875rem;">
+                    <i class="fa-solid fa-shield-halved"></i> Approvals
+                </a>
+                <a href="{{ route('admin.reports.engagement.views') }}" class="sidebar-link py-1 {{ request()->routeIs('admin.reports.engagement*') ? 'active' : '' }}" style="font-size: 0.875rem;">
+                    <i class="fa-solid fa-arrow-trend-up"></i> Engagement
+                </a>
+                <a href="{{ route('admin.reports.activity') }}" class="sidebar-link py-1 {{ request()->routeIs('admin.reports.activity*') ? 'active' : '' }}" style="font-size: 0.875rem;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Activity Log
+                </a>
+            </div>
             @else
             <div class="small text-muted fw-semibold px-3 mb-2">MAIN</div>
             <a href="{{ url('/dashboard') }}" class="sidebar-link {{ request()->is('dashboard') ? 'active' : '' }}">
@@ -229,8 +266,18 @@
             <a href="{{ url('/profile') }}" class="sidebar-link">
                 <i class="fa-solid fa-user"></i> Profile Settings
             </a>
-            <a href="{{ url('/bookmarks') }}" class="sidebar-link">
+            <a href="{{ route('favorites.index') }}" class="sidebar-link {{ request()->routeIs('favorites.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-heart"></i> My Favourites
+            </a>
+            <a href="{{ url('/bookmarks') }}" class="sidebar-link {{ request()->is('bookmarks*') ? 'active' : '' }}">
                 <i class="fa-solid fa-bookmark"></i> My Bookmarks
+            </a>
+            @php $sidebarUnread = auth()->user()->unreadNotifications()->count(); @endphp
+            <a href="{{ route('notifications.index') }}" class="sidebar-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-bell"></i> Notifications
+                @if($sidebarUnread > 0)
+                <span class="badge bg-danger rounded-pill ms-auto">{{ $sidebarUnread }}</span>
+                @endif
             </a>
             <a href="{{ url('/') }}" class="sidebar-link">
                 <i class="fa-solid fa-globe"></i> View Site
@@ -255,6 +302,50 @@
                 <button class="btn btn-link d-lg-none" id="sidebarToggle"><i class="fa-solid fa-bars fa-lg"></i></button>
                 <div class="d-flex align-items-center gap-3 ms-auto">
                     <button class="btn btn-link" data-toggle="theme"><i class="fa-solid fa-moon"></i></button>
+
+                    <!-- Notifications -->
+                    @php
+                        $unreadCount = auth()->user()->unreadNotifications()->count();
+                        $latestNotifications = auth()->user()->notifications()->latest()->take(6)->get();
+                    @endphp
+                    <div class="dropdown">
+                        <button class="btn btn-link position-relative" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Notifications" title="Notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            @if($unreadCount > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
+                            @endif
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 320px; max-width: 340px; max-height: 420px; overflow-y: auto;">
+                            <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+                                <span class="fw-semibold small">Notifications</span>
+                                @if($unreadCount > 0)
+                                <form method="POST" action="{{ route('notifications.readAll') }}">
+                                    @csrf
+                                    <button type="submit" class="btn btn-link btn-sm p-0 small">Mark all read</button>
+                                </form>
+                                @endif
+                            </div>
+                            @forelse($latestNotifications as $notification)
+                            @php $data = $notification->data; @endphp
+                            <a href="{{ $data['type'] === 'post_rejected' ? route('dashboard.posts.edit', $data['article_id']) : url('/blogs/' . $data['slug']) }}"
+                                class="dropdown-item d-flex gap-2 py-2 {{ $notification->read_at ? '' : 'bg-light-subtle' }}">
+                                <i class="{{ ($notification->type === App\Notifications\PostRejected::class ? App\Notifications\PostRejected::presentation() : App\Notifications\PostApproved::presentation())['icon'] }} {{ ($notification->type === App\Notifications\PostRejected::class ? App\Notifications\PostRejected::presentation() : App\Notifications\PostApproved::presentation())['color'] }} mt-1"></i>
+                                <span class="small">
+                                    <span class="d-block">{{ Str::limit($data['message'] ?? 'Notification', 80) }}</span>
+                                    <span class="text-muted d-block" style="font-size: 0.75rem;"><x-time-ago :date="$notification->created_at" /></span>
+                                </span>
+                            </a>
+                            @empty
+                            <div class="px-3 py-4 text-center text-muted small">
+                                <i class="fa-regular fa-bell-slash d-block mb-2 fs-5"></i>
+                                No notifications yet.
+                            </div>
+                            @endforelse
+                            <div class="border-top px-3 py-2 text-center">
+                                <a href="{{ route('notifications.index') }}" class="small text-decoration-none">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
                     <div class="dropdown">
                         <button class="btn btn-link dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
                             @if(auth()->user()->avatar)
@@ -289,6 +380,11 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Live relative timestamps ("just now", "1 sec ago") --}}
+    <script>
+        window.blogHubServerTime = @json(now()->timestamp);
+    </script>
+    <script src="{{ asset('assets/js/relative-time.js') }}"></script>
     <script>
         // Sidebar toggle on mobile
         const sidebar = document.getElementById('sidebar');

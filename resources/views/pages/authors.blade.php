@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Authors — Meet the Writers of BlogHub')
+@section('title', 'Authors Ã¢â‚¬â€ Meet the Writers of BlogHub')
 @section('meta_description', 'Browse all contributing authors on BlogHub. Discover writers, their specialties, and published essays.')
 
 @section('content')
@@ -34,8 +34,13 @@
                         </div>
                         <div class="d-flex gap-2 justify-content-center">
                             <a href="{{ url('/authors/' . $author->username) }}" class="btn btn-outline-primary btn-sm">View Profile</a>
-                            <button class="btn btn-primary btn-sm follow-btn" data-author-id="{{ $author->id }}">
-                                <i class="fa-solid fa-plus me-1"></i> Follow
+                            @php $isFollowing = auth()->check() && auth()->user()->follows()->where('author_id', $author->id)->exists(); @endphp
+                            <button class="btn {{ $isFollowing ? 'btn-primary' : 'btn-outline-primary' }} btn-sm follow-btn"
+                                    data-author-id="{{ $author->id }}"
+                                    data-following="{{ $isFollowing ? '1' : '0' }}"
+                                    aria-pressed="{{ $isFollowing ? 'true' : 'false' }}">
+                                <i class="{{ $isFollowing ? 'fa-solid fa-check' : 'fa-solid fa-plus' }} me-1"></i>
+                                {{ $isFollowing ? 'Following' : 'Follow' }}
                             </button>
                         </div>
                     </div>
@@ -78,26 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     });
 
-    // Follow buttons
-    document.querySelectorAll('.follow-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const authorId = btn.dataset.authorId;
-            try {
-                const response = await fetch(`/authors/${authorId}/follow`, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                });
-                const data = await response.json();
-                if (data.success) {
-                    btn.innerHTML = data.following ? '<i class="fa-solid fa-check me-1"></i> Following' : '<i class="fa-solid fa-plus me-1"></i> Follow';
-                    btn.classList.toggle('btn-primary', !data.following);
-                    btn.classList.toggle('btn-outline-primary', data.following);
-                }
-            } catch (error) {
-                showToast('Error', 'Failed to follow author.', 'fa-solid fa-exclamation-circle text-danger');
-            }
-        });
-    });
+
 });
 </script>
+{{-- Follow button behaviour lives in assets/js/follow-actions.js --}}
+<script src="{{ asset('assets/js/follow-actions.js') }}" defer></script>
 @endpush

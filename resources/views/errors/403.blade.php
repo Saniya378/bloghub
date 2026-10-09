@@ -1,69 +1,82 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="{{ session('theme', 'light') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Denied — BlogHub</title>
+    <title>403 Forbidden — BlogHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/components.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/dark-mode.css') }}">
     <style>
-        .error-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 0; }
-        .error-content { text-align: center; max-width: 560px; padding: 0 1rem; }
-        .error-graphic { margin-bottom: 1.5rem; }
-        .error-graphic svg { width: 280px; height: auto; }
-        .error-code { font-size: clamp(4rem, 10vw, 7rem); font-weight: 800; color: var(--color-primary); line-height: 1; margin-bottom: 0.5rem; letter-spacing: -0.04em; }
-        .error-title { font-size: 1.5rem; font-weight: 700; color: var(--color-primary); margin-bottom: 0.75rem; }
-        .error-text { font-size: 1.0625rem; line-height: 1.65; color: var(--color-text-muted); margin-bottom: 1.5rem; }
-        .error-search { max-width: 420px; margin: 0 auto 1.5rem; }
-        .error-links { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-        .error-home-link { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600; color: var(--color-accent); text-decoration: none; }
-        .error-home-link:hover { text-decoration: underline; }
-        .error-categories { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
-        .error-category-pill { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 9999px; font-size: 0.875rem; font-weight: 600; color: var(--color-text); text-decoration: none; }
-        .error-category-pill:hover { border-color: var(--color-accent); color: var(--color-accent); }
-        .error-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 0.5rem; }
+        .bh-error-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-8) 0;
+            background-color: var(--color-bg);
+        }
+        .bh-error-content {
+            text-align: center;
+            max-width: 540px;
+            padding: 0 var(--space-4);
+        }
+        .bh-error-code {
+            font-family: var(--font-heading);
+            font-size: clamp(4rem, 10vw, 7rem);
+            font-weight: 800;
+            color: var(--color-accent);
+            line-height: 1;
+            margin-bottom: var(--space-2);
+            letter-spacing: -0.04em;
+        }
+        .bh-error-title {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: var(--space-3);
+        }
+        [data-theme="dark"] .bh-error-title {
+            color: #F1F4FA;
+        }
+        .bh-error-text {
+            font-family: var(--font-body);
+            font-size: 1.0625rem;
+            line-height: 1.65;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-6);
+        }
     </style>
 </head>
 <body>
-    <div class="error-page">
-        <div class="error-content">
-            <div class="error-graphic">
-                <svg viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <circle cx="140" cy="100" r="80" fill="var(--color-surface-subtle)" />
-                    <rect x="90" y="70" width="100" height="70" rx="8" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="2" />
-                    <circle cx="140" cy="95" r="15" fill="none" stroke="var(--color-danger)" stroke-width="3" />
-                    <line x1="130" y1="85" x2="150" y2="105" stroke="var(--color-danger)" stroke-width="3" stroke-linecap="round" />
-                    <line x1="150" y1="85" x2="130" y2="105" stroke="var(--color-danger)" stroke-width="3" stroke-linecap="round" />
-                    <rect x="110" y="120" width="60" height="8" rx="4" fill="var(--color-border)" />
-                    <circle cx="50" cy="50" r="4" fill="var(--color-accent)" opacity="0.3" />
-                    <circle cx="230" cy="50" r="4" fill="var(--color-accent)" opacity="0.3" />
-                    <circle cx="50" cy="150" r="4" fill="var(--color-accent)" opacity="0.3" />
-                    <circle cx="230" cy="150" r="4" fill="var(--color-accent)" opacity="0.3" />
-                </svg>
+    <div class="bh-error-page">
+        <div class="bh-error-content">
+            <div class="mb-4">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger-subtle text-danger" style="width: 80px; height: 80px; font-size: 32px;">
+                    <i class="fa-solid fa-lock"></i>
+                </span>
             </div>
-            <div class="error-code">403</div>
-            <h1 class="error-title">Access Denied</h1>
-            <p class="error-text">You do not have permission to access this page. If you believe this is an error, please contact the site administrator.</p>
-            <div class="error-search">
-                <form action="/search" method="GET" class="d-flex gap-2">
-                    <input type="search" name="q" class="form-control" placeholder="Search articles..." aria-label="Search articles">
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-search"></i></button>
-                </form>
-            </div>
-            <div class="error-links">
-                <a href="/" class="error-home-link"><i class="fa-solid fa-house"></i> Back to Home</a>
-                <div>
-                    <div class="error-label">Popular Categories</div>
-                    <div class="error-categories">
-                        <a href="/blogs?category=technology" class="error-category-pill"><i class="fa-solid fa-microchip"></i> Technology</a>
-                        <a href="/blogs?category=design" class="error-category-pill"><i class="fa-solid fa-pen-ruler"></i> Design</a>
-                        <a href="/blogs?category=culture" class="error-category-pill"><i class="fa-solid fa-palette"></i> Culture</a>
-                        <a href="/blogs?category=science" class="error-category-pill"><i class="fa-solid fa-flask"></i> Science</a>
-                    </div>
-                </div>
+            <div class="bh-error-code">403</div>
+            <h1 class="bh-error-title">Access Restricted</h1>
+            <p class="bh-error-text">
+                You do not have administrative privileges or authorization to view this resource. If you believe this is an error, please reach out to our team.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url('/') }}" class="btn btn-bh btn-bh-primary">
+                    <i class="fa-solid fa-house me-2"></i>Back to Home
+                </a>
+                @auth
+                <a href="{{ auth()->user()->dashboardUrl() }}" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-gauge me-2"></i>My Dashboard
+                </a>
+                @else
+                <a href="{{ route('login') }}" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-right-to-bracket me-2"></i>Log In
+                </a>
+                @endauth
             </div>
         </div>
     </div>

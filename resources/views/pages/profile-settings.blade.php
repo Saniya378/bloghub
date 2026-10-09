@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Profile Settings — BlogHub')
+@section('title', 'Profile Settings Ã¢â‚¬â€ BlogHub')
 @section('meta_description', 'Manage your BlogHub profile, update your bio, change your password, and customize your author presence.')
 
 @section('content')
@@ -105,6 +105,83 @@
                     </div>
                 </div>
 
+<!-- Following -->
+                <div class="bh-card mb-4" id="followingCard" data-following-total="{{ $followingTotal }}">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="h5 mb-0">
+                                Authors You Follow
+                                <span class="badge bg-secondary ms-1" id="followingCount">{{ $followingTotal }}</span>
+                            </h2>
+                            @if($followingTotal > 0)
+                            <a href="{{ route('favorites.index', ['tab' => 'following']) }}" class="small text-decoration-none">
+                                Manage all <i class="fa-solid fa-arrow-right ms-1"></i>
+                            </a>
+                            @endif
+                        </div>
+
+                        @if($following->isNotEmpty())
+                        <div class="row g-3" id="followingList">
+                            @foreach($following as $author)
+                            <div class="col-md-6" data-following-row="{{ $author->id }}">
+                                <div class="bh-following-item d-flex align-items-center gap-3">
+                                    @if($author->avatar)
+                                    <img src="{{ $author->avatar }}" alt="{{ $author->name }}" class="rounded-circle flex-shrink-0" style="width: 48px; height: 48px; object-fit: cover;">
+                                    @else
+                                    <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 fw-bold"
+                                          style="width: 48px; height: 48px; background: var(--color-primary); color: #fff;">
+                                        {{ strtoupper(substr($author->name, 0, 1)) }}
+                                    </span>
+                                    @endif
+
+                                    <div class="flex-grow-1" style="min-width: 0;">
+                                        @if($author->profileUrl())
+                                        <a href="{{ $author->profileUrl() }}" class="fw-semibold text-decoration-none d-block text-truncate">
+                                            {{ $author->name }}
+                                        </a>
+                                        @else
+                                        <span class="fw-semibold d-block text-truncate">{{ $author->name }}</span>
+                                        @endif
+                                        <small class="text-muted d-block text-truncate">
+                                            {{ $author->tagline ?: $author->specialty ?: 'Author on BlogHub' }}
+                                        </small>
+                                        <small class="text-muted">
+                                            {{ number_format($author->articles_count) }} posts
+                                            &middot; {{ number_format($author->followers_count) }} followers
+                                        </small>
+                                    </div>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary flex-shrink-0 follow-btn"
+                                            data-author-id="{{ $author->id }}"
+                                            data-following="1"
+                                            data-remove-row="1"
+                                            aria-pressed="true"
+                                            title="Unfollow {{ $author->name }}">
+                                        <i class="fa-solid fa-check me-1"></i> Following
+                                    </button>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+
+                        @if($following->hasPages())
+                        <nav class="mt-4">
+                            {{ $following->links() }}
+                        </nav>
+                        @endif
+                        @else
+                        <div class="text-center py-4" id="followingEmpty">
+                            <i class="fa-regular fa-user-group fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-3">You are not following anyone yet.</p>
+                            <a href="{{ url('/authors') }}" class="btn btn-outline-primary">
+                                <i class="fa-solid fa-users me-2"></i>Discover Authors
+                            </a>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Change Password -->
                 <div class="bh-card mb-4">
                     <div class="card-body p-4 p-md-5">
@@ -160,9 +237,32 @@
 </section>
 @endsection
 @push('scripts')
+{{-- Follow / unfollow buttons on the "Authors You Follow" list --}}
+<script src="{{ asset('assets/js/follow-actions.js') }}" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     if (window.initScrollReveal) window.initScrollReveal();
+
+    const countEl = document.getElementById('followingCount');
+    const card = document.getElementById('followingCard');
+    const empty = document.getElementById('followingEmpty');
+    const list = document.getElementById('followingList');
+
+    // Keep the badge and the empty state in sync with follow/unfollow
+    // anywhere else on the page (author page, authors grid, ...).
+    document.addEventListener('bloghub:follow-change', (event) => {
+        const { following } = event.detail || {};
+        if (!countEl || typeof following === 'undefined') return;
+
+        const current = parseInt(countEl.textContent.replace(/[^\d]/g, ''), 10) || 0;
+        const next = Math.max(0, current + (following ? 1 : -1));
+
+        countEl.textContent = next;
+        card.dataset.followingTotal = next;
+
+        if (empty) empty.classList.toggle('d-none', next > 0);
+        if (list) list.classList.toggle('d-none', next === 0);
+    });
 });
 </script>
 @endpush

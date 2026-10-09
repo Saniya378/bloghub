@@ -22,6 +22,7 @@
                 <tr>
                     <th>Author</th>
                     <th>Comment</th>
+                    <th>Thread</th>
                     <th>On Post</th>
                     <th>Status</th>
                     <th>Date</th>
@@ -38,9 +39,27 @@
                         </div>
                     </td>
                     <td>{{ Str::limit($comment->content, 80) }}</td>
-                    <td><a href="{{ url('/blogs/' . $comment->article->slug) }}" target="_blank">{{ Str::limit($comment->article->title, 30) }}</a></td>
+                    <td>
+                        @if($comment->parent_id)
+                        <span class="badge bg-secondary" title="Level {{ $comment->depth() }} in the thread">
+                            <i class="fa-solid fa-reply me-1"></i>Level {{ $comment->depth() }}
+                        </span>
+                        <small class="text-muted d-block mt-1">
+                            to {{ $comment->parent?->user?->name ?? 'a removed comment' }}
+                        </small>
+                        @else
+                        <span class="badge bg-light text-dark"><i class="fa-solid fa-comment me-1"></i>Top level</span>
+                        @endif
+
+                        @if($comment->replies_count > 0)
+                        <small class="text-muted d-block mt-1">
+                            <i class="fa-solid fa-layer-group me-1"></i>{{ $comment->replies_count }} {{ $comment->replies_count === 1 ? 'reply' : 'replies' }}
+                        </small>
+                        @endif
+                    </td>
+                    <td><a href="{{ url('/blogs/' . $comment->article->slug) }}#comment-{{ $comment->id }}" target="_blank">{{ Str::limit($comment->article->title, 30) }}</a></td>
                     <td><span class="badge {{ $comment->status === 'approved' ? 'bg-success' : ($comment->status === 'pending' ? 'bg-warning' : 'bg-danger') }}">{{ ucfirst($comment->status) }}</span></td>
-                    <td>{{ $comment->created_at->diffForHumans() }}</td>
+                    <td><x-time-ago :date="$comment->created_at" /></td>
                     <td>
                         <div class="d-flex gap-2">
                             @if($comment->status !== 'approved')
@@ -49,7 +68,8 @@
                                 <button type="submit" class="btn btn-sm btn-outline-success" title="Approve"><i class="fa-solid fa-check"></i></button>
                             </form>
                             @endif
-                            <form method="POST" action="{{ url('/dashboard/comments/' . $comment->id . '/delete') }}">
+                            <form method="POST" action="{{ url('/dashboard/comments/' . $comment->id . '/delete') }}"
+                                  onsubmit="return {{ $comment->replies_count > 0 ? 'confirm(\'This will also delete ' . $comment->replies_count . ' nested ' . ($comment->replies_count === 1 ? 'reply' : 'replies') . '. Continue?\')' : 'true' }};">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
@@ -59,7 +79,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center py-5 text-muted">
+                    <td colspan="7" class="text-center py-5 text-muted">
                         <i class="fa-solid fa-comments fa-2x mb-3 d-block"></i>
                         No comments found.
                     </td>

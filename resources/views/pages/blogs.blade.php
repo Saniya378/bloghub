@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Blogs — Explore All Articles on BlogHub')
+@section('title', 'Blogs Ã¢â‚¬â€ Explore All Articles on BlogHub')
 @section('meta_description', 'Search, filter, and browse all long-form essays, tech deep dives, and cultural commentary published on BlogHub.')
 
 @section('content')
@@ -56,7 +56,7 @@
 
         <!-- View Toggle -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="text-muted" id="resultCount">Loading...</div>
+            <div class="text-muted" id="resultCount">Showing {{ $posts->firstItem() ?? 0 }}-{{ $posts->lastItem() ?? 0 }} of {{ $posts->total() }}</div>
             <div class="btn-group">
                 <button class="btn btn-outline-primary active" id="gridViewBtn"><i class="fa-solid fa-th-large"></i></button>
                 <button class="btn btn-outline-primary" id="listViewBtn"><i class="fa-solid fa-list"></i></button>
@@ -70,12 +70,14 @@
             </div>
         </div>
 
-        <!-- Posts Grid -->
-        <div class="row g-4" id="postsContainer">
+        <!-- Posts Grid (data-live-feed makes new author posts appear live) -->
+        <div class="row g-4"
+             id="postsContainer"
+             data-live-feed
+             data-live-cursor="{{ $posts->max('id') ?? 0 }}"
+             data-live-interval="20000">
             @foreach($posts as $post)
-            <div class="col-md-6 col-lg-4">
-                @include('components.article-card', ['article' => $post])
-            </div>
+                @include('components.article-card-cell', ['article' => $post])
             @endforeach
         </div>
 
@@ -115,6 +117,8 @@
 </section>
 @endsection
 @push('scripts')
+{{-- New posts from authors, appended without a reload --}}
+<script src="{{ asset('assets/js/live-feed.js') }}" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');

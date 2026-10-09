@@ -7,6 +7,19 @@
     {{-- Dynamic Title & Meta Description per page via yield --}}
     <title>@yield('title', 'BlogHub — Modern Publishing Platform & Deep Reads')</title>
     <meta name="description" content="@yield('meta_description', 'BlogHub is an editorial publishing platform featuring long-form essays, tech insights, and thought-provoking analysis across multiple disciplines.')">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Open Graph / Social Media Sharing -->
+    <meta property="og:site_name" content="BlogHub">
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:title" content="@yield('og_title', view()->yieldContent('title', 'BlogHub — Modern Publishing Platform'))">
+    <meta property="og:description" content="@yield('og_description', view()->yieldContent('meta_description', 'BlogHub is an editorial publishing platform featuring long-form essays and thought-provoking analysis.'))">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="@yield('og_image', asset('assets/images/og-default.jpg'))">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="@yield('og_title', view()->yieldContent('title', 'BlogHub'))">
+    <meta name="twitter:description" content="@yield('og_description', view()->yieldContent('meta_description', 'BlogHub'))">
+    <meta name="twitter:image" content="@yield('og_image', asset('assets/images/og-default.jpg'))">
  
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -80,6 +93,18 @@
 
     <!-- Toggle Actions (Like, Bookmark, Follow with optimistic UI) -->
     <script src="{{ asset('assets/js/toggle-actions.js') }}" defer></script>
+
+    <!-- Live relative timestamps ("just now", "1 sec ago") -->
+    <script src="{{ asset('assets/js/relative-time.js') }}" defer></script>
+
+    <!-- Shared globals consumed by toggle-actions.js, comments.js and relative-time.js -->
+    <script>
+        window.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        window.isAuthenticated = @json(auth()->check());
+        window.loginUrl = @json(url('/login'));
+        window.registerUrl = @json(url('/register'));
+        window.blogHubServerTime = @json(now()->timestamp);
+    </script>
     
     @stack('scripts')
 

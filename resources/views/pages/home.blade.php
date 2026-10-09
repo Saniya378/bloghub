@@ -158,7 +158,7 @@
         <div class="row g-4">
             @foreach($authors as $author)
             <div class="col-6 col-md-4 col-lg-2">
-                <a href="{{ route('authors.show', $author->username) }}" class="text-decoration-none h-100">
+                <a href="{{ $author->profileUrl() ?? url('/authors') }}" class="text-decoration-none h-100">
                     <div class="bh-author-card">
                         <img src="{{ $author->avatar }}" alt="{{ $author->name }}" class="bh-author-avatar" loading="lazy" onerror="this.onerror=null;this.src='{{ asset('images/avatar-placeholder.svg') }}'">
                         <h3 class="bh-author-name">{{ $author->name }}</h3>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $author->name . ' — Author Profile on BlogHub')
+@section('title', $author->name . ' ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Author Profile on BlogHub')
 @section('meta_description', $author->bio)
 
 @section('content')
@@ -26,9 +26,16 @@
                 </div>
             </div>
             <div class="ms-auto pb-3">
-                <button class="btn btn-primary btn-lg follow-btn" data-author-id="{{ $author->id }}">
-                    <i class="fa-solid fa-plus me-1"></i> Follow
+
+                @php $isFollowing = auth()->check() && auth()->user()->follows()->where('author_id', $author->id)->exists(); @endphp
+                <button class="btn {{ $isFollowing ? 'btn-primary' : 'btn-outline-primary' }} btn-lg follow-btn"
+                        data-author-id="{{ $author->id }}"
+                        data-following="{{ $isFollowing ? '1' : '0' }}"
+                        aria-pressed="{{ $isFollowing ? 'true' : 'false' }}">
+                    <i class="{{ $isFollowing ? 'fa-solid fa-check' : 'fa-solid fa-plus' }} me-1"></i>
+                    {{ $isFollowing ? 'Following' : 'Follow' }}
                 </button>
+
             </div>
         </div>
     </div>
@@ -76,7 +83,7 @@
                                     </h3>
                                     <p class="card-text text-muted small flex-grow-1">{{ Str::limit($post->excerpt, 80) }}</p>
                                     <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                                        <small class="text-muted">{{ $post->published_at->diffForHumans() }}</small>
+                                        <x-time-ago :date="$post->published_at" />
                                         <small class="text-muted"><i class="fa-regular fa-eye me-1"></i>{{ number_format($post->views) }}</small>
                                     </div>
                                 </div>
@@ -120,7 +127,7 @@
                                     <small class="text-muted">Articles</small>
                                 </div>
                                 <div class="col-6">
-                                    <div class="h4 fw-bold text-primary">{{ $stats['followers'] }}</div>
+                                    <div class="h4 fw-bold text-primary" data-follower-count-for="${{ $author->id }}">{{ $stats['followers'] }}</div>
                                     <small class="text-muted">Followers</small>
                                 </div>
                                 <div class="col-6">
@@ -149,28 +156,6 @@
 </section>
 @endsection
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const followBtn = document.querySelector('.follow-btn');
-    if (followBtn) {
-        followBtn.addEventListener('click', async () => {
-            const authorId = followBtn.dataset.authorId;
-            try {
-                const response = await fetch(`/authors/${authorId}/follow`, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                });
-                const data = await response.json();
-                if (data.success) {
-                    followBtn.innerHTML = data.following ? '<i class="fa-solid fa-check me-1"></i> Following' : '<i class="fa-solid fa-plus me-1"></i> Follow';
-                    followBtn.classList.toggle('btn-primary', !data.following);
-                    followBtn.classList.toggle('btn-outline-primary', data.following);
-                }
-            } catch (error) {
-                showToast('Error', 'Failed to follow author.', 'fa-solid fa-exclamation-circle text-danger');
-            }
-        });
-    }
-});
-</script>
+{{-- Follow button behaviour lives in assets/js/follow-actions.js --}}
+<script src="{{ asset('assets/js/follow-actions.js') }}" defer></script>
 @endpush

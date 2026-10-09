@@ -35,7 +35,7 @@ class ToggleTest extends TestCase
     {
         $user = User::factory()->create();
         $article = \App\Models\Article::factory()->create([
-            'likes' => 1,
+            'likes' => 0,
         ]);
 
         // First like
@@ -188,9 +188,7 @@ class ToggleTest extends TestCase
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
-        $author = User::factory()->create([
-            'followers' => 0,
-        ]);
+        $author = User::factory()->create();
 
         $this->actingAs($user1);
         $this->post("/authors/{$author->id}/follow");
@@ -199,7 +197,7 @@ class ToggleTest extends TestCase
         $this->post("/authors/{$author->id}/follow");
 
         $author->refresh();
-        $this->assertEquals(2, $author->followers);
+        $this->assertEquals(2, $author->followers()->count());
     }
 
     // ==================== TOGGLE IDEMPOTENCY TESTS ====================

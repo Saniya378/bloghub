@@ -34,7 +34,7 @@
                                 <img src="{{ $article->user->avatar }}" alt="{{ $article->user->name }}" class="rounded-circle me-2" style="width: 28px; height: 28px; object-fit: cover;">
                                 <small class="fw-semibold">{{ $article->user->name }}</small>
                             </div>
-                            <small class="text-muted">{{ $article->published_at->diffForHumans() }}</small>
+                            <x-time-ago :date="$article->published_at" />
                         </div>
                     </div>
                 </div>

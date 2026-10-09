@@ -7,11 +7,13 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -56,6 +58,47 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'social' => 'array',
         ];
+    }
+
+    /**
+     * Guarantee a username exists, since author profile URLs depend on it.
+     */
+    protected static function booted(): void
+    {
+        $ensureUsername = function (self $user): void {
+            if (blank($user->username)) {
+                $user->username = static::generateUniqueUsername($user->name);
+            }
+        };
+
+        static::creating($ensureUsername);
+        static::updating($ensureUsername);
+    }
+
+    /**
+     * Build a slug from the display name that is not taken yet.
+     */
+    public static function generateUniqueUsername(?string $name): string
+    {
+        $base = Str::slug($name ?? '');
+        $base = $base === '' ? 'user' : Str::limit($base, 100, '');
+
+        $username = $base;
+        $suffix = 2;
+
+        while (static::where('username', $username)->exists()) {
+            $username = Str::limit($base, 100 - strlen((string) $suffix) - 1, '') . '-' . $suffix++;
+        }
+
+        return $username;
+    }
+
+    /**
+     * The author profile URL, or null when the user has no username yet.
+     */
+    public function profileUrl(): ?string
+    {
+        return filled($this->username) ? route('authors.show', $this->username) : null;
     }
 
     /**
@@ -107,7 +150,7 @@ class User extends Authenticatable
      */
     public function articleLikes(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\Article::class, 'article_likes');
+        return $this->belongsToMany(\App\Models\Article::class, 'article_likes')->withTimestamps();
     }
 
     /**
@@ -115,7 +158,7 @@ class User extends Authenticatable
      */
     public function bookmarks(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\Article::class, 'bookmarks');
+        return $this->belongsToMany(\App\Models\Article::class, 'bookmarks')->withTimestamps();
     }
 
     /**
@@ -123,7 +166,7 @@ class User extends Authenticatable
      */
     public function follows(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\User::class, 'follows', 'user_id', 'author_id');
+        return $this->belongsToMany(\App\Models\User::class, 'follows', 'user_id', 'author_id')->withTimestamps();
     }
 
     /**
@@ -131,7 +174,7 @@ class User extends Authenticatable
      */
     public function followers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\User::class, 'follows', 'author_id', 'user_id');
+        return $this->belongsToMany(\App\Models\User::class, 'follows', 'author_id', 'user_id')->withTimestamps();
     }
 
     /**
@@ -147,6 +190,6 @@ class User extends Authenticatable
      */
     public function commentLikes(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\Comment::class, 'comment_likes');
+        return $this->belongsToMany(\App\Models\Comment::class, 'comment_likes')->withTimestamps();
     }
 }
