@@ -95,8 +95,9 @@ Route::prefix('v1')->group(function () {
 
         // Article CRUD & User interactions
         Route::post('/articles', [ArticleController::class, 'store']);
+        Route::match(['put', 'post'], '/articles/{id}', [ArticleController::class, 'update']);
         Route::post('/articles/{id}/update', [ArticleController::class, 'update']);
-        Route::put('/articles/{id}', [ArticleController::class, 'update']);
+        Route::post('/articles/{id}/submit', [ArticleController::class, 'submit']);
         Route::delete('/articles/{id}', [ArticleController::class, 'destroy']);
         Route::post('/articles/{id}/toggle-like', [ArticleController::class, 'toggleLike']);
         Route::post('/articles/{id}/toggle-bookmark', [ArticleController::class, 'toggleBookmark']);

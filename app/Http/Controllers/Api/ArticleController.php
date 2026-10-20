@@ -241,6 +241,26 @@ class ArticleController extends Controller
             ], 422);
         }
 
+        $requestedStatus = $request->input('status');
+
+        // Rule 1 & 5: Authors can only create as draft or pending (default draft).
+        // If author sends published, return 422. Admins can create directly as published.
+        if ($user->role !== 'admin') {
+            if ($requestedStatus === Article::STATUS_PUBLISHED) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors' => [
+                        'status' => ['Authors cannot publish articles directly. Status must be draft or pending.'],
+                    ],
+                ], 422);
+            }
+
+            $initialStatus = Article::STATUS_DRAFT;
+        } else {
+            $initialStatus = $requestedStatus ?: Article::STATUS_PUBLISHED;
+        }
+
         // Generate slug
         $baseSlug = Str::slug($request->input('title'));
         $slug = $baseSlug;
@@ -269,12 +289,6 @@ class ArticleController extends Controller
         $wordCount = str_word_count(strip_tags($request->input('content')));
         $readingTime = max(1, ceil($wordCount / 200));
 
-        // Determine status based on role
-        $requestedStatus = $request->input('status', Article::STATUS_PUBLISHED);
-        $status = ($user->role === 'admin' || $requestedStatus === Article::STATUS_DRAFT)
-            ? $requestedStatus
-            : Article::STATUS_PUBLISHED;
-
         $article = Article::create([
             'user_id' => $user->id,
             'title' => $request->input('title'),
@@ -285,14 +299,19 @@ class ArticleController extends Controller
             'tags' => $tags ?: [],
             'image' => $imagePath,
             'reading_time' => $readingTime,
-            'status' => $status,
-            'published_at' => $status === Article::STATUS_PUBLISHED ? now() : null,
+            'status' => $initialStatus,
+            'published_at' => ($user->role === 'admin' && $initialStatus === Article::STATUS_PUBLISHED) ? now() : null,
         ]);
+
+        // If author requested pending, submit it for review
+        if ($user->role !== 'admin' && $requestedStatus === Article::STATUS_PENDING) {
+            $article->submitForReview();
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Article created successfully.',
-            'data' => $article->load('user:id,name,username,avatar'),
+            'data' => $article->fresh()->load('user:id,name,username,avatar'),
         ], 201);
     }
 
@@ -312,12 +331,30 @@ class ArticleController extends Controller
 
         $user = $request->user();
 
-        // Check permission
+        // Check ownership
         if ($article->user_id !== $user->id && $user->role !== 'admin') {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to edit this article.',
             ], 403);
+        }
+
+        // Rule 2 & 5: Authors can only edit draft or rejected articles.
+        // If status is pending or published, return 403 with exact message.
+        if ($user->role !== 'admin') {
+            if ($article->status === Article::STATUS_PENDING || $article->status === Article::STATUS_PUBLISHED) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This article cannot be edited right now.',
+                ], 403);
+            }
+
+            if (!in_array($article->status, [Article::STATUS_DRAFT, Article::STATUS_REJECTED], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This article cannot be edited right now.',
+                ], 403);
+            }
         }
 
         $validator = Validator::make($request->all(), [
@@ -338,7 +375,39 @@ class ArticleController extends Controller
             ], 422);
         }
 
-        $data = $request->only(['title', 'excerpt', 'content', 'category_slug', 'status']);
+        if ($user->role !== 'admin' && $request->input('status') === Article::STATUS_PUBLISHED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => [
+                    'status' => ['Authors cannot publish articles directly.'],
+                ],
+            ], 422);
+        }
+
+        $data = $request->only(['title', 'excerpt', 'content', 'category_slug']);
+        $shouldSubmitForReview = false;
+
+        // Rule 3: When a rejected article is edited and saved, its status becomes draft
+        // (keep review_note visible until it is resubmitted).
+        if ($user->role !== 'admin') {
+            if ($article->status === Article::STATUS_REJECTED) {
+                $data['status'] = Article::STATUS_DRAFT;
+            } elseif ($request->input('status') === Article::STATUS_PENDING) {
+                // If author submits status = 'pending' on draft, it must go through submitForReview()
+                // so review fields (submitted_at) and ActivityLog are never skipped.
+                $shouldSubmitForReview = true;
+            } elseif ($request->filled('status')) {
+                $data['status'] = Article::STATUS_DRAFT;
+            }
+        } else {
+            if ($request->filled('status')) {
+                $data['status'] = $request->input('status');
+                if ($data['status'] === Article::STATUS_PUBLISHED && !$article->published_at) {
+                    $data['published_at'] = now();
+                }
+            }
+        }
 
         if ($request->filled('title') && $request->input('title') !== $article->title) {
             $baseSlug = Str::slug($request->input('title'));
@@ -368,15 +437,58 @@ class ArticleController extends Controller
             $data['reading_time'] = max(1, ceil($wordCount / 200));
         }
 
-        if (isset($data['status']) && $data['status'] === Article::STATUS_PUBLISHED && !$article->published_at) {
-            $data['published_at'] = now();
-        }
-
         $article->update($data);
+
+        if ($shouldSubmitForReview) {
+            $article->submitForReview();
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Article updated successfully.',
+            'data' => $article->fresh()->load('user:id,name,username,avatar'),
+        ]);
+    }
+
+    /**
+     * Submit an article for editorial review.
+     */
+    public function submit(Request $request, int $id): JsonResponse
+    {
+        $article = Article::find($id);
+
+        if (!$article) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article not found.',
+            ], 404);
+        }
+
+        $user = $request->user();
+
+        // Owner only check (or admin)
+        if ($article->user_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to submit this article.',
+            ], 403);
+        }
+
+        // Allowed only from draft or rejected status
+        if (!in_array($article->status, [Article::STATUS_DRAFT, Article::STATUS_REJECTED], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article can only be submitted for review from draft or rejected status.',
+            ], 422);
+        }
+
+        // Calls submitForReview() which sets status to pending, submitted_at = now(),
+        // clears review_note, reviewed_at, reviewed_by, and logs ActivityLog (same as website)
+        $article->submitForReview();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Article submitted for review successfully.',
             'data' => $article->fresh()->load('user:id,name,username,avatar'),
         ]);
     }

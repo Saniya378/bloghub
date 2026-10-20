@@ -255,7 +255,7 @@ class ApiEndpointsTest extends TestCase
             'content' => 'Detailed architecture for Riverpod, Bloc, and Clean Architecture in Flutter apps.',
             'category_slug' => 'technology',
             'tags' => ['flutter', 'mobile'],
-            'status' => 'published',
+            'status' => 'draft',
         ]);
 
         $createRes->assertStatus(201)

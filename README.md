@@ -1,81 +1,423 @@
-# BlogHub — Modern Publishing Platform
+# BlogHub — Multi-Role Modern Publishing & Editorial Platform
 
-> A full-stack editorial platform featuring long-form essays, tech deep dives, and cultural commentary — built with Laravel 12, Bootstrap 5, and vanilla JavaScript.
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
+[![Sanctum](https://img.shields.io/badge/Laravel-Sanctum_v4-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com/docs/sanctum)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
+[![Vite](https://img.shields.io/badge/Vite-7.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
+[![PWA Ready](https://img.shields.io/badge/PWA-Enabled-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)](#pwa--offline-support)
+[![Tests Passing](https://img.shields.io/badge/Tests-17_Suites_Passing-brightgreen?style=for-the-badge&logo=phpunit&logoColor=white)](#testing--quality-assurance)
+
+> A full-stack, enterprise-grade publishing ecosystem featuring long-form journalism, technical deep dives, hierarchical discussion threads, role-based workflows, comprehensive analytics, and a RESTful API for multi-platform delivery. Built with **Laravel 12**, **Bootstrap 5**, **Laravel Sanctum**, and modern vanilla JavaScript.
 
 ---
 
 ## Table of Contents
 
-- [Description](#description)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
+- [Overview & Vision](#overview--vision)
+- [System Architecture & Roles](#system-architecture--roles)
+  - [Role-Based Access Control (RBAC)](#role-based-access-control-rbac)
+  - [Roles & Permissions Matrix](#roles--permissions-matrix)
+- [Core Features & Modules](#core-features--modules)
+  - [1. Editorial Review & Article Lifecycle](#1-editorial-review--article-lifecycle)
+  - [2. Threaded & Moderated Comments](#2-threaded--moderated-comments)
+  - [3. Social Engagements & Live Feed](#3-social-engagements--live-feed)
+  - [4. Reader Favorites & Library Hub](#4-reader-favorites--library-hub)
+  - [5. Real-Time Notification Center](#5-real-time-notification-center)
+  - [6. Author Dashboard (`/dashboard`)](#6-author-dashboard-dashboard)
+  - [7. Admin Control Center (`/admin`)](#7-admin-control-center-admin)
+  - [8. Advanced Analytics & Reports Engine (`/admin/reports`)](#8-advanced-analytics--reports-engine-adminreports)
+  - [9. Contact Inbox & Newsletter Engine](#9-contact-inbox--newsletter-engine)
+  - [10. PWA & Offline Support](#10-pwa--offline-support)
+- [RESTful API Reference (`/api/v1`)](#restful-api-reference-apiv1)
+  - [Authentication & Headers](#authentication--headers)
+  - [API Endpoints Directory](#api-endpoints-directory)
+- [Database Architecture & ERD](#database-architecture--erd)
+- [Design System & UI Tokens](#design-system--ui-tokens)
 - [Folder Structure](#folder-structure)
-- [Brand Identity](#brand-identity)
-- [Entity Relationship Diagram](#entity-relationship-diagram)
-- [Demo Accounts](#demo-accounts)
-- [Setup Instructions](#setup-instructions)
-- [Testing](#testing)
-- [Screenshots](#screenshots)
-- [License](#license)
+- [Demo Credentials](#demo-credentials)
+- [Installation & Local Setup](#installation--local-setup)
+- [Environment Configuration](#environment-configuration)
+- [Testing & Quality Assurance](#testing--quality-assurance)
+- [Security Architecture](#security-architecture)
+- [License & Credits](#license--credits)
 
 ---
 
-## Description
+## Overview & Vision
 
-BlogHub is a curated publishing platform where independent writers, systems engineers, and creative theorists publish in-depth essays, architectural breakdowns, and unhurried reflections. The platform emphasizes editorial quality, reader respect, and sustainable monetization over engagement-optimized content farms.
+**BlogHub** is an opinionated, high-performance publishing platform crafted for independent essayists, technology researchers, and cultural journalists. In contrast to engagement-maximizing clickbait feeds, BlogHub prioritizes **editorial integrity, reading typography, nuanced discussion threads, and transparent governance**.
 
-The application demonstrates a complete Laravel 12 architecture with server-side rendering via Blade templates, a client-side data layer for dynamic content, comprehensive authentication with OTP-based password reset, article CRUD with authorization, comment moderation, and a full filtering/search/pagination system.
-
----
-
-## Features
-
-### Core Features
-- **Article Publishing** — Create, edit, delete articles with rich HTML content, tags, categories, and draft/published workflow
-- **User Authentication** — Registration, login, logout with rate limiting, session management, and inactive account blocking
-- **OTP Password Reset** — Email-based one-time password flow with expiration and single-use enforcement
-- **Comment System** — Submit comments with moderation workflow (pending → approved/rejected)
-- **Social Interactions** — Like articles, bookmark for later, follow authors
-- **Search & Filtering** — Full-text search, category/author filtering, sorting (newest/oldest/popular), pagination
-- **Responsive Design** — Mobile-first layout with Bootstrap 5 grid system
-- **Dark Mode** — Theme toggle with localStorage persistence
-- **PWA Support** — Service worker for offline caching, manifest for installability
-
-### Security Features
-- CSRF protection on all forms
-- XSS sanitization on article content (allowlist-based)
-- SQL injection prevention via Eloquent ORM
-- Rate limiting on authentication endpoints
-- Security headers (CSP, X-Frame-Options, X-Content-Type-Options)
-- Mass assignment protection via `$fillable`
-- Authorization checks on all mutating operations
-- Account activation/deactivation support
-
-### Performance Features
-- Lazy loading images with `loading="lazy"` and `decoding="async"`
-- Width/height attributes to prevent layout shift (CLS)
-- Deferred script loading
-- Preconnect/dns-prefetch hints for CDN origins
-- Critical CSS preloading
-- HTTP cache-control headers
-- Service worker for static asset caching
+The application operates as both a **server-rendered web portal (Blade + Vite)** and a **headless RESTful backend (Laravel Sanctum)** capable of powering mobile apps and single-page applications.
 
 ---
 
-## Tech Stack
+## System Architecture & Roles
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| **Backend Framework** | Laravel | ^12.0 |
-| **PHP** | PHP | ^8.2 |
-| **Database** | SQLite (default), MySQL/PostgreSQL | — |
-| **ORM** | Eloquent | — |
-| **Frontend Templating** | Blade | — |
-| **CSS Framework** | Bootstrap | 5.3.3 |
-| **Icons** | Font Awesome | 6.5.1 |
-| **Build Tool** | Vite | ^7.0.7 |
-| **Testing** | PHPUnit | ^11.5.50 |
-| **Package Manager** | Composer + npm | — |
+BlogHub enforces strict multi-tenancy and authorization guards across all HTTP endpoints and controllers.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        BlogHub Role Hierarchy                          │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│  [ Guest / Visitor ]                                                   │
+│    └─ Read published articles, browse categories & authors            │
+│    └─ Submit contact inquiries & subscribe to newsletter               │
+│                                                                        │
+│  [ Reader / Member ] (Role: `reader`)                                  │
+│    ├─ Inherits all Guest capabilities                                  │
+│    ├─ Like articles & bookmark posts into personal library             │
+│    ├─ Post threaded comments & like comments                           │
+│    ├─ Follow authors & receive custom personalized feed                │
+│    ├─ Manage Favorites Hub (`/favorites`) & profile settings          │
+│    └─ In-app notifications & Apply to become an Author                 │
+│                                                                        │
+│  [ Author / Contributor ] (Role: `author`)                             │
+│    ├─ Inherits all Reader capabilities                                 │
+│    ├─ Dedicated Author Dashboard (`/dashboard`)                        │
+│    ├─ Create, draft, edit, and submit articles for editorial review    │
+│    ├─ Real-time article readership statistics (views, likes, comments) │
+│    └─ Moderate reader comments on their own published articles         │
+│                                                                        │
+│  [ Super Administrator ] (Role: `admin`)                               │
+│    ├─ Full system governance at (`/admin`)                             │
+│    ├─ Approve / reject / feature / unpublish any article               │
+│    ├─ Moderate users (activate/deactivate, promote/demote roles)       │
+│    ├─ Manage categories, testimonials, and contact inbox               │
+│    ├─ Export newsletter subscribers to CSV                             │
+│    └─ Comprehensive Analytics & Reports Engine (`/admin/reports`)      │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### Roles & Permissions Matrix
+
+| Capability / Feature | Guest | Reader | Author | Admin |
+|:---|:---:|:---:|:---:|:---:|
+| Read Published Articles | ✅ | ✅ | ✅ | ✅ |
+| Filter, Sort & Search Posts | ✅ | ✅ | ✅ | ✅ |
+| View Author Profiles | ✅ | ✅ | ✅ | ✅ |
+| Like Articles & Bookmarks | ❌ | ✅ | ✅ | ✅ |
+| Post Threaded Comments | ❌ | ✅ | ✅ | ✅ |
+| Like Comments | ❌ | ✅ | ✅ | ✅ |
+| Follow Authors | ❌ | ✅ | ✅ | ✅ |
+| Access Favorites Hub (`/favorites`) | ❌ | ✅ | ✅ | ✅ |
+| In-App Notification Center | ❌ | ✅ | ✅ | ✅ |
+| Request Author Status | ❌ | ✅ | — | — |
+| Access Author Dashboard (`/dashboard`) | ❌ | ❌ | ✅ | 🔄 *(Redirects)* |
+| Write / Edit / Delete Own Articles | ❌ | ❌ | ✅ | ✅ |
+| Moderate Comments on Own Articles | ❌ | ❌ | ✅ | ✅ |
+| Access Admin Panel (`/admin`) | ❌ | ❌ | ❌ | ✅ |
+| Approve / Reject Article Submissions | ❌ | ❌ | ❌ | ✅ |
+| Toggle User Roles & Active Status | ❌ | ❌ | ❌ | ✅ |
+| Category & Testimonial Management | ❌ | ❌ | ❌ | ✅ |
+| View Activity Logs & Audit Trail | ❌ | ❌ | ❌ | ✅ |
+| Export Analytics & CSV Reports | ❌ | ❌ | ❌ | ✅ |
+
+---
+
+## Core Features & Modules
+
+### 1. Editorial Review & Article Lifecycle
+
+Articles in BlogHub move through a robust state machine ensuring editorial quality:
+
+```
+ [ Author Draft ] ──▶ [ Submitted / Pending Review ] ──▶ [ Admin Review ]
+                                                              │
+                                            ┌─────────────────┴─────────────────┐
+                                            ▼                                   ▼
+                                      [ Approved ]                        [ Rejected ]
+                                            │                         (With feedback reason)
+                                            ▼
+                                   [ Published Live ]
+                                            │
+                                            ├──▶ [ Featured Flag Toggle ]
+                                            └──▶ [ Admin Unpublish / Archive ]
+```
+
+- **Rich Content & SEO**: Articles support HTML markup with sanitization, custom excerpts, cover banners, tags (stored as JSON), and reading time estimation.
+- **Slug Management**: URL-safe unique slugs generated automatically from titles.
+- **View Counting**: Atomic, race-condition protected view increments on visits.
+
+### 2. Threaded & Moderated Comments
+
+- **Recursive Hierarchies**: Supports multi-level parent-child replies via `parent_id`.
+- **Live Thread Updates**: Dedicated `/comments/{articleId}/thread` fragment endpoint allowing dynamic DOM updates without full-page reloads.
+- **Dual-Layer Moderation**:
+  - Authors can moderate comments specifically on their own articles via `/dashboard/comments`.
+  - Admins retain overarching power to approve or permanently delete comments platform-wide.
+- **Community Likes**: Users can like and react to individual comments.
+
+### 3. Social Engagements & Live Feed
+
+- **Follow Engine**: Readers can follow specific authors. Toggling a follow dynamically impacts the user's live feed stream.
+- **Interactive Toggles**: Immediate AJAX toggles for likes, bookmarks, and follows with optimistic UI state transitions and CSRF handling.
+- **Live Relative Timestamps**: Client-side updater converts UTC timestamps into human-readable relative formats (*"3 minutes ago"*, *"just now"*).
+
+### 4. Reader Favorites & Library Hub
+
+Dedicated destination (`/favorites`) allowing members to organize their reading life:
+- **Bookmarked Articles**: Saved reads with direct un-bookmark toggles.
+- **Liked Articles**: Quick reference to appreciated essays.
+- **Followed Authors**: Directory of subscribed creators with instant unfollow actions.
+- **Liked Comments**: History of insightful reader contributions.
+
+### 5. Real-Time Notification Center
+
+- Notification bell in navbar with live unread indicator badge.
+- Events generating notifications:
+  - Article approval/rejection updates to authors.
+  - New replies to user comments.
+  - New followers.
+  - New comments on authored articles.
+- Actions: Mark single notification as read, mark all as read.
+
+### 6. Author Dashboard (`/dashboard`)
+
+A distraction-free workbench dedicated to creators:
+- **Performance KPI Cards**: Total published articles, aggregate reader views, accumulated likes, and active comments.
+- **Post Management Grid**: Filter by status (*Draft*, *Pending*, *Approved*, *Rejected*, *Published*).
+- **Article Editor**: Title, category assignment, tag picker, excerpt summary, cover image URL, and rich content workspace.
+- **Comment Moderation Desk**: Review recent reader discussions on authored posts with inline approve/delete buttons.
+
+### 7. Admin Control Center (`/admin`)
+
+Unified command portal protected by `auth` and `role:admin` middleware:
+- **Overview Dashboard**: High-level platform KPIs, recent registrations, pending review queues, and quick actions.
+- **User Management**: Search user database, filter by role, activate/deactivate suspect accounts, and alter user roles (`reader` ↔ `author` ↔ `admin`).
+- **Post Moderation Queue**: Review incoming author submissions, inspect full content, one-click approve, reject with notes, toggle featured banner placement, or unpublish.
+- **Category Taxonomy Manager**: Create, edit, and delete categories with custom icons and slugs.
+- **Testimonials Hub**: Curate platform testimonials displayed on public landings.
+- **Contact Message Inbox**: Read reader inquiries, mark messages as resolved/read, and prune old inquiries.
+- **Subscriber Directory**: Inspect newsletter subscribers with one-click CSV export.
+
+### 8. Advanced Analytics & Reports Engine (`/admin/reports`)
+
+An enterprise reporting suite providing granular visibility into platform health, with instant CSV/Excel export pipelines:
+
+1. **Reports Dashboard (`/admin/reports`)**: Consolidated performance summary and aggregate charts.
+2. **Author Reports (`/admin/reports/authors`)**: Author onboarding velocity, active contributors, top authors by readership, and registration logs.
+3. **Article Performance (`/admin/reports/articles`)**: Publishing breakdown by category, most viewed articles, engagement ratios, and full article database export.
+4. **Approval Workflow Audit (`/admin/reports/approvals`)**: Author application backlog, article review turnaround times, and approval/rejection ratios.
+5. **Engagement & Traffic (`/admin/reports/engagement`)**: Reader view metrics, like velocity, and comment engagement curves.
+6. **Platform Activity Log (`/admin/reports/activity`)**: Immutable audit trail recording user logins, role updates, post submissions, and administrative overrides.
+
+### 9. Contact Inbox & Newsletter Engine
+
+- Rate-limited contact inquiry form (`throttle:5,1`) with validation and database persistence.
+- Newsletter subscription endpoint with email deduplication, regex validation, and rate protection.
+
+### 10. PWA & Offline Support
+
+- **Web App Manifest** (`manifest.json`): Configured with theme colors, icons, and standalone display mode for home screen installation on Android and iOS.
+- **Service Worker** (`sw.js`): Intelligent cache-first strategy for static assets and offline fallback caching.
+
+---
+
+## RESTful API Reference (`/api/v1`)
+
+BlogHub exposes a complete REST API versioned under `/api/v1` powered by **Laravel Sanctum**.
+
+### Authentication & Headers
+
+Protected routes require the `Authorization` header containing a valid Bearer token obtained from the login/register endpoints:
+
+```http
+Authorization: Bearer <sanctum_personal_access_token>
+Accept: application/json
+Content-Type: application/json
+```
+
+### Standard Response Envelope
+
+```json
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": { ... }
+}
+```
+
+### API Endpoints Directory
+
+#### 🔐 Authentication & Password Recovery
+
+| Method | Endpoint | Description | Auth Required |
+|:---|:---|:---|:---:|
+| `POST` | `/api/v1/auth/register` | Register new reader account and receive Sanctum token | No |
+| `POST` | `/api/v1/auth/login` | Authenticate with email/password; returns user + token | No |
+| `POST` | `/api/v1/auth/forgot-password` | Send 6-digit OTP code to registered email | No |
+| `POST` | `/api/v1/auth/verify-otp` | Verify validity of 6-digit OTP code | No |
+| `POST` | `/api/v1/auth/reset-password` | Set new password using verified OTP token | No |
+| `GET` | `/api/v1/auth/me` | Fetch authenticated user profile and permissions | Bearer Token |
+| `POST` | `/api/v1/auth/logout` | Revoke current access token and invalidate session | Bearer Token |
+
+#### 📰 Articles & Content
+
+| Method | Endpoint | Description | Auth Required |
+|:---|:---|:---|:---:|
+| `GET` | `/api/v1/articles` | List published articles (supports `search`, `category`, `sort`, `page`) | No |
+| `GET` | `/api/v1/articles/feed` | Personalized reading feed based on followed authors | Bearer Token / Optional |
+| `GET` | `/api/v1/articles/highlights` | Fetch featured and trending spotlight articles | No |
+| `GET` | `/api/v1/articles/{id_or_slug}` | Retrieve single article details, author card, and stats | No |
+| `POST` | `/api/v1/articles` | Create a new article (author/admin only) | Bearer Token |
+| `PUT` | `/api/v1/articles/{id}` | Update article details or submit for review | Bearer Token |
+| `DELETE`| `/api/v1/articles/{id}` | Permanently delete an article | Bearer Token |
+| `POST` | `/api/v1/articles/{id}/toggle-like` | Like or unlike an article | Bearer Token |
+| `POST` | `/api/v1/articles/{id}/toggle-bookmark` | Add or remove article from personal bookmarks | Bearer Token |
+
+#### 💬 Comments & Discussions
+
+| Method | Endpoint | Description | Auth Required |
+|:---|:---|:---|:---:|
+| `GET` | `/api/v1/articles/{articleId}/comments` | Retrieve nested comments thread for an article | No |
+| `POST` | `/api/v1/articles/{articleId}/comments` | Submit new comment or reply (supports `parent_id`) | Bearer Token |
+| `DELETE`| `/api/v1/comments/{id}` | Delete own comment (or author/admin moderation) | Bearer Token |
+| `POST` | `/api/v1/comments/{id}/toggle-like` | Like or unlike a specific comment | Bearer Token |
+
+#### ✍️ Authors & Creator Hub
+
+| Method | Endpoint | Description | Auth Required |
+|:---|:---|:---|:---:|
+| `GET` | `/api/v1/authors` | List all verified platform authors | No |
+| `GET` | `/api/v1/authors/featured` | Fetch top-performing spotlight authors | No |
+| `GET` | `/api/v1/authors/{id_or_username}` | Fetch author profile, bio, specialties, and socials | No |
+| `GET` | `/api/v1/authors/{id}/articles` | List articles authored by specific user | No |
+| `POST` | `/api/v1/authors/{id}/toggle-follow`| Follow or unfollow an author | Bearer Token |
+| `GET` | `/api/v1/authors/{id}/follow-status`| Check if authenticated user follows this author | Bearer Token |
+| `GET` | `/api/v1/author/dashboard` | Author statistics: total views, likes, articles, comments | Bearer Token |
+| `GET` | `/api/v1/author/comments` | Retrieve pending/approved comments on author's posts | Bearer Token |
+| `POST` | `/api/v1/author/comments/{id}/approve` | Author approves comment on their post | Bearer Token |
+| `DELETE`| `/api/v1/author/comments/{id}` | Author rejects/deletes comment on their post | Bearer Token |
+
+#### 📂 Categories & Search
+
+| Method | Endpoint | Description | Auth Required |
+|:---|:---|:---|:---:|
+| `GET` | `/api/v1/categories` | List all available categories with article counts | No |
+| `GET` | `/api/v1/categories/{slug}` | Get category metadata and matching articles | No |
+| `GET` | `/api/v1/search` | Search articles by keyword, category, tag, or author | No |
+| `GET` | `/api/v1/search/suggestions` | Instant search autocomplete suggestions | No |
+
+#### 👤 Profile & Notifications
+
+| Method | Endpoint | Description | Auth Required |
+|:---|:---|:---|:---:|
+| `GET` | `/api/v1/profile` | Fetch profile, stats, followed authors, bookmarks | Bearer Token |
+| `POST` | `/api/v1/profile/update` | Update name, username, bio, tagline, socials, avatar | Bearer Token |
+| `POST` | `/api/v1/profile/password` | Update account password | Bearer Token |
+| `GET` | `/api/v1/profile/bookmarks` | Fetch user's saved reading list | Bearer Token |
+| `GET` | `/api/v1/profile/favorites` | Fetch liked posts, liked comments, and bookmarks | Bearer Token |
+| `POST` | `/api/v1/profile/become-author` | Submit request to elevate account to Author | Bearer Token |
+| `GET` | `/api/v1/notifications` | Fetch unread and recent in-app notifications | Bearer Token |
+| `POST` | `/api/v1/notifications/{id}/read`| Mark single notification as read | Bearer Token |
+| `POST` | `/api/v1/notifications/read-all` | Mark all unread notifications as read | Bearer Token |
+
+#### 🌐 Platform & Public Meta
+
+| Method | Endpoint | Description | Auth Required |
+|:---|:---|:---|:---:|
+| `GET` | `/api/v1/stats` | Platform statistics (total posts, authors, readers) | No |
+| `GET` | `/api/v1/testimonials` | Public reader testimonials | No |
+| `POST` | `/api/v1/contact` | Submit contact inquiry | No |
+| `POST` | `/api/v1/newsletter/subscribe` | Join email newsletter dispatch | No |
+
+---
+
+## Database Architecture & ERD
+
+BlogHub utilizes a relational schema optimized for editorial workflows, interaction counts, and audit trails:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 BlogHub Relational ERD                                 │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                        │
+│  ┌──────────────────────┐           ┌──────────────────────┐                           │
+│  │        users         │           │      categories      │                           │
+│  ├──────────────────────┤           ├──────────────────────┤                           │
+│  │ id (PK)              │           │ id (PK)              │                           │
+│  │ name                 │           │ name                 │                           │
+│  │ username (UQ)        │           │ slug (UQ)            │                           │
+│  │ email (UQ)           │           │ description          │                           │
+│  │ password             │           │ icon                 │                           │
+│  │ role (reader/author/ │           │ created_at           │                           │
+│  │       admin)         │           └──────────┬───────────┘                           │
+│  │ is_active (bool)     │                      │ 1:M                                   │
+│  │ avatar, cover_image  │                      │                                       │
+│  │ bio, tagline         │                      ▼                                       │
+│  │ specialty            │           ┌──────────────────────┐   1:M  ┌────────────────┐ │
+│  │ social (JSON)        │ 1:M       │       articles       ├───────►│    comments    │ │
+│  │ email_verified_at    ├──────────►│ id (PK)              │        ├────────────────┤ │
+│  │ remember_token       │           │ user_id (FK -> users)│        │ id (PK)        │ │
+│  │ created_at           │           │ category_id / slug   │        │ user_id (FK)   │ │
+│  └──────────┬───────────┘           │ title, slug (UQ)     │        │ article_id (FK)│ │
+│             │                       │ excerpt, content     │        │ parent_id (FK) ◄─┐ (Replies)
+│             │                       │ cover_image          │        │ content        │ └──┘
+│             │                       │ tags (JSON)          │        │ status         │ │
+│             │                       │ status (draft/       │        │ likes          │ │
+│             │                       │   review/published)  │        │ created_at     │ │
+│             │                       │ is_featured (bool)   │        └────────────────┘ │
+│             │                       │ views, likes         │                           │
+│             │                       │ reading_time         │                           │
+│             │                       │ published_at         │                           │
+│             │                       └──────────┬───────────┘                           │
+│             │                                  │                                       │
+│             ├─────────────────┬────────────────┼────────────────┬──────────────────────┤
+│             ▼                 ▼                ▼                ▼                      ▼
+│  ┌────────────────────┐ ┌───────────┐ ┌────────────────┐ ┌───────────┐ ┌─────────────┐│
+│  │   article_likes    │ │ bookmarks │ │  comment_likes │ │  follows  │ │notifications││
+│  ├────────────────────┤ ├───────────┤ ├────────────────┤ ├───────────┤ ├─────────────┤│
+│  │ id (PK)            │ │ id (PK)   │ │ id (PK)        │ │ id (PK)   │ │ id (PK)     ││
+│  │ user_id (FK)       │ │ user_id   │ │ user_id (FK)   │ │ user_id   │ │ user_id (FK)││
+│  │ article_id (FK)    │ │ article_id│ │ comment_id (FK)│ │ author_id │ │ type, data  ││
+│  │ created_at         │ │ created_at│ │ created_at     │ │ created_at│ │ read_at     ││
+│  └────────────────────┘ └───────────┘ └────────────────┘ └───────────┘ └─────────────┘│
+│                                                                                        │
+│  ┌────────────────────┐ ┌───────────────────────┐ ┌──────────────────┐ ┌─────────────┐│
+│  │   activity_logs    │ │ newsletter_subscribers│ │ contact_messages │ │testimonials ││
+│  ├────────────────────┤ ├───────────────────────┤ ├──────────────────┤ ├─────────────┤│
+│  │ id (PK)            │ │ id (PK)               │ │ id (PK)          │ │ id (PK)     ││
+│  │ user_id (FK, opt)  │ │ email (UQ)            │ │ name, email      │ │ name, role  ││
+│  │ action, model_type │ │ is_active (bool)      │ │ subject, message │ │ content     ││
+│  │ details (JSON), ip │ │ created_at            │ │ status (read)    │ │ avatar, stars│
+│  └────────────────────┘ └───────────────────────┘ └──────────────────┘ └─────────────┘│
+│                                                                                        │
+│  ┌───────────────────────────────┐ ┌──────────────────────────┐ ┌─────────────────────┐│
+│  │    personal_access_tokens     │ │  password_reset_tokens   │ │      sessions       ││
+│  ├───────────────────────────────┤ ├──────────────────────────┤ ├─────────────────────┤│
+│  │ id (PK), tokenable_id (FK)    │ │ email (PK), token, created││ id (PK), payload    ││
+│  │ name, token (UQ), abilities   │ └──────────────────────────┘ └─────────────────────┘│
+│  └───────────────────────────────┘                                                     │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Design System & UI Tokens
+
+BlogHub implements an editorial-inspired design system rooted in classical typographic proportions and an 8px spatial grid.
+
+### Color Tokens
+
+| Token Name | Light Mode | Dark Mode | Semantic Role |
+|:---|:---|:---|:---|
+| `--color-primary` | `#1F2A44` | `#9BB7E7` | Navy headers, primary brand identity, active tabs |
+| `--color-accent` | `#C8461F` | `#E85B33` | Editorial terracotta, primary action CTAs, highlight badges |
+| `--color-secondary` | `#3F5A45` | `#6EA378` | Sage green, success confirmations, approval indicators |
+| `--color-bg` | `#FBFAF7` | `#0D1117` | Cream paper background (Light) / Carbon dark (Dark) |
+| `--color-surface` | `#FFFFFF` | `#161D2A` | Elevated cards, input fields, dropdown containers |
+| `--color-text` | `#14171F` | `#F1F4FA` | High-contrast long-form reading typography |
+| `--color-text-muted` | `#575E6C` | `#9DA7B8` | Subtitles, reading metadata, timestamp indicators |
+| `--color-border` | `#D8D5CC` | `#2B374D` | Editorial hairline dividers and card boundaries |
+
+### Typography Scale
+
+- **Headings (H1–H3)**: `Fraunces` (High-contrast transitional serif)
+- **Body & Controls**: `Inter` (Optimized for digital screen legibility)
+- **Metadata & Tags**: `IBM Plex Mono` (Precision monospace for reading times, tags, and stats)
 
 ---
 
@@ -86,375 +428,290 @@ Bloghub/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── AuthController.php       # Login, register, logout
-│   │   │   ├── ArticleController.php    # Article CRUD with authorization
-│   │   │   ├── CommentController.php    # Comment CRUD with moderation
-│   │   │   ├── OtpController.php        # OTP request, verify, reset
-│   │   │   └── ToggleController.php     # Like, bookmark, follow toggles
+│   │   │   ├── Admin/
+│   │   │   │   └── Reports/
+│   │   │   │       ├── ActivityReportController.php    # Audit log filtering & CSV export
+│   │   │   │       ├── ApprovalReportController.php    # Author & article approval reports
+│   │   │   │       ├── ArticleReportController.php     # Publishing by author/category
+│   │   │   │       ├── AuthorReportController.php      # User onboarding & activity metrics
+│   │   │   │       ├── EngagementReportController.php  # Views, reads & reaction analytics
+│   │   │   │       └── ReportsDashboardController.php  # Unified reports overview
+│   │   │   ├── AdminController.php                     # Central admin command center
+│   │   │   ├── ArticleController.php                   # Public article reader & filters
+│   │   │   ├── AuthController.php                      # Web login, register, logout
+│   │   │   ├── AuthorController.php                    # Public author index & profile
+│   │   │   ├── BlogDetailController.php                # Article detail view with thread
+│   │   │   ├── CategoryController.php                  # Public categories listing
+│   │   │   ├── CommentController.php                   # Comment submission & moderation
+│   │   │   ├── ContactController.php                   # Contact form handling
+│   │   │   ├── DashboardController.php                 # Author workspace & post editor
+│   │   │   ├── FavoritesController.php                 # Reader library & favorites dashboard
+│   │   │   ├── HomeController.php                      # Homepage curation & newsletter
+│   │   │   ├── NotificationController.php              # Notification read management
+│   │   │   ├── OtpController.php                       # 6-digit OTP password reset flow
+│   │   │   ├── ProfileController.php                   # User profile & author application
+│   │   │   ├── SearchController.php                    # Search query & autocomplete
+│   │   │   ├── ToggleController.php                    # Like, bookmark, follow toggles
+│   │   │   └── Api/                                    # ── REST API v1 CONTROLLERS ──
+│   │   │       ├── ArticleController.php               # API Article CRUD & interactions
+│   │   │       ├── AuthController.php                  # Sanctum register, login, OTP
+│   │   │       ├── AuthorController.php                # Author API & author dashboard
+│   │   │       ├── CategoryController.php              # Category endpoints
+│   │   │       ├── CommentController.php               # Comment posting & reactions
+│   │   │       ├── GeneralController.php               # Stats, contact, newsletter
+│   │   │       ├── NotificationController.php          # In-app notifications API
+│   │   │       ├── PostController.php                  # Legacy feed compatibility
+│   │   │       ├── ProfileController.php               # Account & favorites API
+│   │   │       └── SearchController.php                # Autocomplete & search API
 │   │   └── Middleware/
-│   │       ├── Authenticate.php         # Auth + active status check
-│   │       ├── RateLimit.php            # Generic rate limiting
-│   │       ├── SecurityHeaders.php      # CSP, X-Frame-Options, etc.
-│   │       └── VerifyCsrfToken.php      # CSRF token validation
+│   │       ├── Authenticate.php                        # Auth & active account verification
+│   │       ├── RoleMiddleware.php                      # RBAC role verification (admin/author)
+│   │       ├── RateLimit.php                           # Throttle guard
+│   │       └── SecurityHeaders.php                     # CSP, HSTS, X-Frame-Options
 │   ├── Models/
-│   │   ├── User.php                     # User with roles, is_active
-│   │   ├── Article.php                  # Article with draft/published
-│   │   └── Comment.php                  # Comment with moderation status
-│   ├── Providers/
-│   │   └── AppServiceProvider.php
+│   │   ├── ActivityLog.php                             # Platform audit trail
+│   │   ├── Article.php                                 # Post entity, scopes & metrics
+│   │   ├── Category.php                                # Taxonomies
+│   │   ├── Comment.php                                 # Threaded comments & replies
+│   │   ├── ContactMessage.php                          # Reader inquiries
+│   │   ├── NewsletterSubscriber.php                    # Email subscriptions
+│   │   ├── Testimonial.php                             # Curated reviews
+│   │   └── User.php                                    # Users, roles, avatars & relations
 │   └── Support/
-│       └── HtmlSanitizer.php            # Server-side HTML sanitizer
-├── bootstrap/
-│   ├── app.php                          # Middleware registration
-│   └── providers.php
-├── config/
-│   ├── app.php                          # APP_DEBUG, APP_ENV
-│   ├── cache.php
-│   ├── database.php
-│   └── session.php
+│       └── HtmlSanitizer.php                           # Allowlist-based HTML sanitizer
 ├── database/
-│   ├── database.sqlite
-│   ├── factories/
-│   │   ├── UserFactory.php
-│   │   ├── ArticleFactory.php
-│   │   └── CommentFactory.php
-│   ├── migrations/
-│   │   ├── 0001_01_01_000000_create_users_table.php
-│   │   ├── 2026_09_29_000000_add_security_fields_to_users_table.php
-│   │   ├── 2026_09_29_000001_create_articles_table.php
-│   │   ├── 2026_09_29_000002_create_comments_table.php
-│   │   └── 2026_09_29_000003_create_interactions_table.php
+│   ├── database.sqlite                                 # Local development database
+│   ├── migrations/                                     # 22 schema migrations
 │   └── seeders/
-│       └── DatabaseSeeder.php
+│       ├── DatabaseSeeder.php                          # Master seeder with rich content
+│       └── ActivityLogSeeder.php                       # Initial audit log generator
 ├── public/
-│   ├── index.php
-│   ├── manifest.json                    # PWA manifest
-│   ├── sw.js                            # Service worker
+│   ├── manifest.json                                   # PWA install configuration
+│   ├── sw.js                                           # Service Worker offline cache
 │   └── assets/
-│       ├── css/
-│       │   ├── style.css                # Design tokens, typography, utilities
-│       │   ├── components.css           # Component styles
-│       │   └── dark-mode.css            # Dark theme overrides
-│       └── js/
-│           ├── data.js                  # Centralized content data
-│           ├── components.js            # Reusable render functions
-│           └── main.js                  # Theme, scroll, search, toasts
+│       ├── css/                                        # style.css, components.css, dark-mode.css
+│       └── js/                                         # main.js, components.js, data.js
 ├── resources/
 │   └── views/
-│       ├── layouts/
-│       │   └── app.blade.php            # Main layout with preconnect, defer
-│       ├── partials/
-│       │   ├── navbar.blade.php         # Auth-aware navigation
-│       │   ├── footer.blade.php
-│       │   └── search-overlay.blade.php
-│       ├── pages/
-│       │   ├── home.blade.php
-│       │   ├── blogs.blade.php
-│       │   ├── blog-details.blade.php
-│       │   ├── categories.blade.php
-│       │   ├── authors.blade.php
-│       │   ├── author-profile.blade.php
-│       │   ├── search-results.blade.php
-│       │   ├── about.blade.php
-│       │   ├── contact.blade.php
-│       │   ├── login.blade.php
-│       │   ├── register.blade.php
-│       │   ├── forgot-password.blade.php
-│       │   ├── verify-otp.blade.php
-│       │   ├── reset-password.blade.php
-│       │   ├── privacy.blade.php
-│       │   ├── terms.blade.php
-│       │   └── ui-kit.blade.php
-│       └── errors/
-│           └── 404.blade.php
+│       ├── layouts/app.blade.php                       # Master HTML5 layout with prefetch
+│       ├── partials/                                   # Navbar, footer, search overlay
+│       └── pages/
+│           ├── home.blade.php                          # Curated editorial home
+│           ├── blogs.blade.php                         # Listing with filters & sorting
+│           ├── blog-details.blade.php                  # Article view & comments thread
+│           ├── favorites.blade.php                     # Reader library hub
+│           ├── profile-settings.blade.php              # Account management
+│           ├── admin/                                  # Admin portal & reports views
+│           │   ├── overview.blade.php
+│           │   ├── posts.blade.php
+│           │   ├── users.blade.php
+│           │   ├── categories.blade.php
+│           │   ├── comments.blade.php
+│           │   ├── messages.blade.php
+│           │   ├── subscribers.blade.php
+│           │   ├── testimonials.blade.php
+│           │   └── reports/                            # 11 reporting dashboard views
+│           └── dashboard/                              # Author portal views
+│               ├── overview.blade.php
+│               ├── posts.blade.php
+│               ├── post-form.blade.php
+│               └── comments.blade.php
 ├── routes/
-│   ├── web.php                          # All routes with middleware
-│   └── console.php
-├── tests/
-│   ├── Feature/
-│   │   ├── AuthTest.php
-│   │   ├── OtpFlowTest.php
-│   │   ├── PostAuthorizationTest.php
-│   │   ├── ToggleTest.php
-│   │   ├── CommentTest.php
-│   │   └── BlogFilteringTest.php
-│   └── Unit/
-│       └── ExampleTest.php
-├── .env.example                         # Safe environment template
-├── composer.json
-├── package.json
-├── phpunit.xml
-├── vite.config.js
-└── artisan
+│   ├── api.php                                         # Versioned REST API v1 routes
+│   ├── web.php                                         # Server-rendered web routes
+│   └── console.php                                     # CLI maintenance tasks
+└── tests/
+    └── Feature/                                        # 17 Feature test suites
 ```
 
 ---
 
-## Brand Identity
+## Demo Credentials
 
-### Color Palette
+The platform ships pre-configured with realistic editorial demo accounts created via `php artisan db:seed`.
 
-| Token | Light Mode | Dark Mode | Usage |
-|-------|-----------|-----------|-------|
-| `--color-primary` | `#1F2A44` | `#9BB7E7` | Headings, brand elements |
-| `--color-accent` | `#C8461F` | `#E85B33` | CTAs, highlights, active states |
-| `--color-secondary` | `#3F5A45` | `#6EA378` | Success states, secondary actions |
-| `--color-bg` | `#FBFAF7` | `#0D1117` | Page background |
-| `--color-surface` | `#FFFFFF` | `#161D2A` | Cards, inputs, surfaces |
-| `--color-text` | `#14171F` | `#F1F4FA` | Body text |
-| `--color-text-muted` | `#575E6C` | `#9DA7B8` | Secondary text |
-| `--color-border` | `#D8D5CC` | `#2B374D` | Dividers, borders |
+All demo accounts share the standard password: **`password`**
 
-### Typography
-
-| Role | Font Family | Usage |
-|------|------------|-------|
-| **Headings** | Fraunces (serif) | H1–H3, brand name, section titles |
-| **Body** | Inter (sans-serif) | Paragraphs, descriptions, UI text |
-| **Meta/Labels** | IBM Plex Mono (monospace) | Captions, dates, tags, stats |
-
-### Type Scale
-
-| Element | Size | Line Height | Weight |
-|---------|------|-------------|--------|
-| H1 | 2.5rem (40px) | 1.25 | 700 |
-| H2 | 1.75rem (28px) | 1.3 | 700 |
-| H3 | 1.25rem (20px) | 1.35 | 600 |
-| Body | 1rem (16px) | 1.6 | 400 |
-| Caption | 0.8125rem (13px) | 1.4 | 400 |
-
-### Spacing Scale (8px Grid)
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-1` | 4px | Tight gaps, icon spacing |
-| `--space-2` | 8px | Small gaps, inline elements |
-| `--space-3` | 12px | Medium gaps, list items |
-| `--space-4` | 16px | Default padding, card gaps |
-| `--space-5` | 20px | Section padding |
-| `--space-6` | 24px | Large section gaps |
-| `--space-8` | 32px | Hero sections |
-| `--space-12` | 48px | Page sections |
-
-### Border Radius
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--border-radius-sm` | 4px | Small elements, inputs |
-| `--border-radius` | 8px | Cards, buttons, default |
-| `--border-radius-pill` | 9999px | Pills, avatars, tags |
+| Role | Name | Email | Password | Access Level |
+|:---|:---|:---|:---|:---|
+| **Admin** | Admin User | `admin@bloghub.com` | `password` | Full Admin Control Center (`/admin`) + Reports Engine |
+| **Author** | Elena Rostova | `elena@bloghub.com` | `password` | Author Dashboard (`/dashboard`), Post Creation & Moderation |
+| **Author** | Marcus Chen | `marcus@bloghub.com` | `password` | Author Dashboard (`/dashboard`), Post Creation & Moderation |
+| **Author** | Dr. Sarah Jenkins | `sarah@bloghub.com` | `password` | Author Dashboard (`/dashboard`), Post Creation & Moderation |
+| **Reader** | Reader One | `reader1@bloghub.com` | `password` | Reading, Threaded Comments, Bookmarks & Following |
+| **Reader** | Reader Two | `reader2@bloghub.com` | `password` | Reading, Threaded Comments, Bookmarks & Following |
 
 ---
 
-## Entity Relationship Diagram
+## Installation & Local Setup
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              BlogHub ERD                                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────────────┐         ┌──────────────┐         ┌──────────────┐        │
-│  │    users     │         │   articles   │         │   comments   │        │
-│  ├──────────────┤         ├──────────────┤         ├──────────────┤        │
-│  │ id (PK)      │◄────────┤ id (PK)      │◄────────┤ id (PK)      │        │
-│  │ name         │    1:M  │ user_id (FK) │    1:M  │ user_id (FK) │        │
-│  │ email (UQ)   │         │ title        │         │ article_id   │        │
-│  │ password     │         │ slug (UQ)    │         │ content      │        │
-│  │ role         │         │ excerpt      │         │ status       │        │
-│  │ is_active    │         │ content      │         │ likes        │        │
-│  │ email_verified│        │ category_slug│         │ created_at   │        │
-│  │ remember_token│         │ tags (JSON)  │         │ updated_at   │        │
-│  │ created_at   │         │ status       │         └──────────────┘        │
-│  │ updated_at   │         │ views        │                                   │
-│  └──────────────┘         │ likes        │         ┌──────────────┐        │
-│                           │ comment_count│         │ article_likes│        │
-│                           │ reading_time │         ├──────────────┤        │
-│                           │ published_at │         │ id (PK)      │        │
-│                           │ created_at   │         │ user_id (FK) │        │
-│                           │ updated_at   │         │ article_id   │        │
-│                           └──────────────┘         │ created_at   │        │
-│                                                    └──────────────┘        │
-│  ┌──────────────┐         ┌──────────────┐         ┌──────────────┐        │
-│  │  bookmarks   │         │   follows    │         │ comment_likes│        │
-│  ├──────────────┤         ├──────────────┤         ├──────────────┤        │
-│  │ id (PK)      │         │ id (PK)      │         │ id (PK)      │        │
-│  │ user_id (FK) │         │ user_id (FK) │         │ user_id (FK) │        │
-│  │ article_id   │         │ author_id(FK)│         │ comment_id   │        │
-│  │ created_at   │         │ created_at   │         │ created_at   │        │
-│  └──────────────┘         └──────────────┘         └──────────────┘        │
-│                                                                             │
-│  ┌──────────────┐         ┌──────────────┐         ┌──────────────┐        │
-│  │   sessions   │         │password_reset│         │    cache     │        │
-│  ├──────────────┤         ├──────────────┤         ├──────────────┤        │
-│  │ id (PK)      │         │ email (PK)   │         │ key (PK)     │        │
-│  │ user_id (FK) │         │ token        │         │ value        │        │
-│  │ ip_address   │         │ created_at   │         │ expiration   │        │
-│  │ user_agent   │         └──────────────┘         └──────────────┘        │
-│  │ payload      │                                                          │
-│  │ last_activity│                                                          │
-│  └──────────────┘                                                          │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+### System Prerequisites
 
-Relationships:
-  users 1:M articles      (A user writes many articles)
-  users 1:M comments      (A user writes many comments)
-  articles 1:M comments   (An article has many comments)
-  users M:M articles      (article_likes - users like many articles)
-  users M:M articles      (bookmarks - users bookmark many articles)
-  users M:M users         (follows - users follow many authors)
-  users M:M comments      (comment_likes - users like many comments)
+- **PHP**: `^8.2` with `pdo_sqlite`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json` extensions
+- **Composer**: `^2.0`
+- **Node.js**: `^18.0` & **npm**: `^9.0`
+- **Database**: SQLite (default, zero-configuration) or MySQL / PostgreSQL
+
+### Quick Setup (One Command)
+
+BlogHub provides an automated setup script defined in `composer.json`:
+
+```bash
+composer run setup
 ```
 
----
-
-## Demo Accounts
-
-| Role | Email | Password | Description |
-|------|-------|----------|-------------|
-| **User** | `test@example.com` | `password` | Default seeded user for testing |
-| **Admin** | `admin@bloghub.com` | `AdminPass1` | Full access to moderation |
-
-> **Note:** Run `php artisan db:seed` to create the default test user. Create an admin account via tinker:
-> ```bash
-> php artisan tinker
-> >>> \App\Models\User::create(['name' => 'Admin', 'email' => 'admin@bloghub.com', 'password' => 'AdminPass1', 'role' => 'admin']);
-> ```
-
----
-
-## Setup Instructions
-
-### Prerequisites
-
-- PHP ^8.2
-- Composer ^2.0
-- Node.js ^18.0
-- npm ^9.0
-
-### Step-by-Step Setup
+### Step-by-Step Manual Installation
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/bloghub.git
+git clone https://github.com/Saniya378/bloghub.git
 cd bloghub
 
-# 2. Install PHP dependencies
+# 2. Install PHP backend dependencies
 composer install
 
-# 3. Create environment file
+# 3. Create environment configuration
 cp .env.example .env
 
-# 4. Generate application key
+# 4. Generate unique application encryption key
 php artisan key:generate
 
-# 5. Create SQLite database (if not exists)
+# 5. Initialize the SQLite database file
+# On Windows PowerShell:
+New-Item -ItemType File -Force -Path database/database.sqlite
+# On Linux/macOS:
 touch database/database.sqlite
 
-# 6. Run migrations and seeders
+# 6. Execute database migrations and seed realistic demo data
 php artisan migrate --seed
 
-# 7. Create storage link
+# 7. Create storage symlink for uploaded avatars and banners
 php artisan storage:link
 
-# 8. Install Node dependencies
+# 8. Install frontend npm dependencies
 npm install
 
-# 9. Build frontend assets
+# 9. Build frontend assets for production
 npm run build
 
-# 10. Start development server
+# 10. Start the Laravel development server
 php artisan serve
 ```
 
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `APP_NAME` | `BlogHub` | Application name |
-| `APP_ENV` | `production` | Environment (local/staging/production) |
-| `APP_KEY` | — | Encryption key (auto-generated) |
-| `APP_DEBUG` | `false` | Debug mode (set false in production) |
-| `APP_URL` | `http://localhost` | Application URL |
-| `DB_CONNECTION` | `sqlite` | Database connection |
-| `DB_DATABASE` | `database/database.sqlite` | SQLite database path |
-| `CACHE_STORE` | `database` | Cache driver |
-| `SESSION_DRIVER` | `database` | Session driver |
-| `QUEUE_CONNECTION` | `database` | Queue driver |
-| `MAIL_MAILER` | `log` | Mail driver |
+Access the application in your browser at: **`http://127.0.0.1:8000`**
 
 ---
 
-## Testing
+## Environment Configuration
 
-```bash
-# Run all tests
-php artisan test
+Key configuration parameters inside `.env`:
 
-# Run feature tests only
-php artisan test --testsuite=Feature
+```ini
+APP_NAME=BlogHub
+APP_ENV=local
+APP_KEY=base64:...
+APP_DEBUG=true
+APP_URL=http://127.0.0.1:8000
 
-# Run unit tests only
-php artisan test --testsuite=Unit
+# Database Configuration (Default: SQLite)
+DB_CONNECTION=sqlite
+# For MySQL uncomment and configure:
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=bloghub
+# DB_USERNAME=root
+# DB_PASSWORD=
 
-# Run with coverage
-php artisan test --coverage
+# Session, Cache & Queue Drivers
+SESSION_DRIVER=database
+CACHE_STORE=database
+QUEUE_CONNECTION=database
+
+# Mail Configuration (Set to 'log' for local testing)
+MAIL_MAILER=log
 ```
 
-### Test Coverage
+---
 
-| Test File | Coverage Area |
-|-----------|--------------|
-| `AuthTest.php` | Registration, login, logout, validation, rate limiting |
-| `OtpFlowTest.php` | OTP request, verification, password reset, expiration |
-| `PostAuthorizationTest.php` | Article CRUD, ownership, admin override, mass assignment |
-| `ToggleTest.php` | Like, bookmark, follow toggles, idempotency |
-| `CommentTest.php` | Submission, moderation, approval/rejection, deletion |
-| `BlogFilteringTest.php` | Search, filter, sort, pagination, SQL injection prevention |
+## Testing & Quality Assurance
+
+BlogHub includes 17 automated feature test suites guaranteeing regression prevention, security boundaries, and API contract compliance.
+
+### Executing the Test Suites
+
+```bash
+# Run the entire test suite
+php artisan test
+
+# Run only the API endpoints test suite
+php artisan test --filter=ApiEndpointsTest
+
+# Run only the Author API tests
+php artisan test --filter=AuthorApiTest
+
+# Run reports module tests
+php artisan test --filter=ReportsModuleTest
+```
+
+### Complete Test Suites Inventory
+
+| Test Suite | Purpose & Coverage |
+|:---|:---|
+| `ApiEndpointsTest.php` | Sanctum authentication, registration, article/comment API endpoints, headers |
+| `AuthorApiTest.php` | Author profile endpoints, follow states, author dashboard metrics via API |
+| `AuthTest.php` | Web registration, credential validation, rate limiting, session protection |
+| `BlogFilteringTest.php` | Search queries, category filtering, tag lookups, SQL injection defense |
+| `CommentTest.php` | Comment submission, spam protection, authorization checks |
+| `ThreadedCommentsTest.php` | Recursive parent-child replies, nested tree rendering, deletion cascade |
+| `FavoritesDashboardTest.php` | Reader library tabs, liked articles, bookmarks, followed author lists |
+| `FollowAndLiveFeedTest.php` | Author following mechanics, dynamic live feed personalization |
+| `LiveTimestampsTest.php` | Accurate relative timestamp parsing and localization |
+| `OtpFlowTest.php` | 6-digit OTP code dispatch, expiration checks, password reset execution |
+| `PostAuthorizationTest.php` | Author-only editing, admin moderation override, mass-assignment defense |
+| `ProfileFollowingTest.php` | User settings updates, bio/tagline edits, following lists |
+| `ReportsModuleTest.php` | Reports controller permissions, data aggregation, CSV generation |
+| `ReportsTest.php` | Reports routing and admin access control |
+| `ReviewWorkflowTest.php` | Article lifecycle: draft submission, admin approval, rejection with notes |
+| `ToggleTest.php` | Idempotent toggles for likes, bookmarks, and author follows |
+| `ExampleTest.php` | Basic application health check |
+
+---
+
+## Security Architecture
+
+BlogHub applies defensive engineering principles across the application lifecycle:
+
+1. **HTML Sanitization**: Custom `HtmlSanitizer` utility strips dangerous script tags, event handlers (`onload`, `onerror`), and malicious attributes from article bodies while preserving legitimate typography markup (`<blockquote>`, `<code>`, `<h3>`, `<img>`).
+2. **Rate Limiting**: Critical endpoints (login, registration, OTP requests, contact inquiries) are guarded with Laravel's `throttle` middleware to prevent brute-force attacks and abuse.
+3. **Cross-Site Request Forgery (CSRF)**: All state-changing web requests require valid CSRF tokens automatically verified by `VerifyCsrfToken` middleware.
+4. **Token Revocation (Sanctum)**: API tokens are hashed, scoped, and immediately revokable upon logout.
+5. **Role-Based Route Guards**: Routes are segregated by `auth` and `role:{role}` middleware; unauthorized access triggers immediate redirect or 403 Forbidden responses.
+6. **SQL Injection Prevention**: All queries utilize Eloquent ORM or parameterized PDO bindings.
+7. **Security Headers**: Custom `SecurityHeaders` middleware injects `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, and strict referrer policies on all responses.
 
 ---
 
 ## Screenshots
 
-### Home Page
-![Home Page](screenshots/home.png)
-*Hero section, featured articles, trending posts, categories, authors*
+| Desktop View | Dark Mode |
+|:---:|:---:|
+| ![Home Page](screenshots/home.png)<br>*Curated Editorial Homepage* | ![Dark Mode](screenshots/dark-mode.png)<br>*High-Contrast Carbon Dark Mode* |
 
-### Blogs Listing
-![Blogs](screenshots/blogs.png)
-*Article grid with search, filters, and pagination*
-
-### Blog Details
-![Blog Details](screenshots/blog-details.png)
-*Full article view with author box, comments, related posts*
-
-### Author Profile
-![Author Profile](screenshots/author-profile.png)
-*Cover image, bio, stats, article grid*
-
-### Categories
-![Categories](screenshots/categories.png)
-*Category grid with icons and article counts*
-
-### Dark Mode
-![Dark Mode](screenshots/dark-mode.png)
-*Full dark theme with inverted colors*
-
-### Mobile Responsive
-![Mobile](screenshots/mobile.png)
-*Mobile navigation, responsive grid, touch targets*
+| Author Dashboard | Admin Reports |
+|:---:|:---:|
+| ![Author Dashboard](screenshots/blogs.png)<br>*Author Publishing Workspace* | ![Admin Reports](screenshots/author-profile.png)<br>*Analytics & Business Intelligence* |
 
 ---
 
-## License
+## License & Credits
 
-This project is open-source software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **License**: Released under the permissive [MIT License](https://opensource.org/licenses/MIT).
+- **Core Framework**: [Laravel 12](https://laravel.com) by Taylor Otwell and the Laravel community.
+- **Frontend**: [Bootstrap 5](https://getbootstrap.com) with custom vanilla CSS design tokens.
+- **Iconography**: [Font Awesome 6](https://fontawesome.com).
+- **Typography**: [Fraunces](https://fonts.google.com/specimen/Fraunces) & [Inter](https://fonts.google.com/specimen/Inter) via Google Fonts.
 
 ---
 
-## Credits
-
-- **Design System** — Custom CSS with 8px grid, Fraunces/Inter/IBM Plex Mono typography
-- **Icons** — Font Awesome 6.5.1
-- **Images** — Picsum Photos, Pravatar
-- **Framework** — Laravel 12
+*Engineered with precision for modern journalism and thoughtful publishing.*
