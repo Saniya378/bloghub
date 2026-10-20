@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\Category;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -285,16 +286,22 @@ class ArticleController extends Controller
             $tags = array_map('trim', explode(',', $tags));
         }
 
+        // Sanitize content and excerpt
+        $content = HtmlSanitizer::sanitize($request->input('content'));
+        $excerpt = $request->filled('excerpt')
+            ? HtmlSanitizer::sanitize($request->input('excerpt'))
+            : Str::limit(strip_tags($content), 150);
+
         // Reading time calculation (avg 200 words per minute)
-        $wordCount = str_word_count(strip_tags($request->input('content')));
+        $wordCount = str_word_count(strip_tags($content));
         $readingTime = max(1, ceil($wordCount / 200));
 
         $article = Article::create([
             'user_id' => $user->id,
             'title' => $request->input('title'),
             'slug' => $slug,
-            'excerpt' => $request->input('excerpt') ?: Str::limit(strip_tags($request->input('content')), 150),
-            'content' => $request->input('content'),
+            'excerpt' => $excerpt,
+            'content' => $content,
             'category_slug' => $request->input('category_slug'),
             'tags' => $tags ?: [],
             'image' => $imagePath,
@@ -385,7 +392,13 @@ class ArticleController extends Controller
             ], 422);
         }
 
-        $data = $request->only(['title', 'excerpt', 'content', 'category_slug']);
+        $data = $request->only(['title', 'category_slug']);
+        if ($request->has('content')) {
+            $data['content'] = HtmlSanitizer::sanitize($request->input('content'));
+        }
+        if ($request->has('excerpt')) {
+            $data['excerpt'] = $request->filled('excerpt') ? HtmlSanitizer::sanitize($request->input('excerpt')) : null;
+        }
         $shouldSubmitForReview = false;
 
         // Rule 3: When a rejected article is edited and saved, its status becomes draft
@@ -432,8 +445,8 @@ class ArticleController extends Controller
             $data['tags'] = is_string($tags) ? array_map('trim', explode(',', $tags)) : $tags;
         }
 
-        if ($request->filled('content')) {
-            $wordCount = str_word_count(strip_tags($request->input('content')));
+        if (isset($data['content'])) {
+            $wordCount = str_word_count(strip_tags($data['content']));
             $data['reading_time'] = max(1, ceil($wordCount / 200));
         }
 

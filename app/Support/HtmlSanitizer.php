@@ -49,30 +49,41 @@ class HtmlSanitizer
     /**
      * Sanitize HTML content.
      */
-    public static function sanitize(string $html): string
+    public static function sanitize(?string $html): string
     {
+        if ($html === null || trim($html) === '') {
+            return '';
+        }
+
         // Use DOMDocument for robust parsing
         $dom = new \DOMDocument();
         
         // Suppress warnings for malformed HTML
         libxml_use_internal_errors(true);
         
-        // Load HTML with UTF-8 encoding
-        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        // Load HTML wrapped in body with UTF-8 encoding
+        $dom->loadHTML('<?xml encoding="utf-8" ?><body>' . $html . '</body>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         
         libxml_clear_errors();
 
-        // Recursively clean nodes
-        self::cleanNode($dom->documentNode);
-
-        // Extract body content
         $body = $dom->getElementsByTagName('body')->item(0);
+        if (!$body) {
+            return '';
+        }
+
+        // Recursively clean child nodes of body
+        $children = [];
+        foreach ($body->childNodes as $child) {
+            $children[] = $child;
+        }
+        foreach ($children as $child) {
+            self::cleanNode($child);
+        }
+
+        // Extract sanitized HTML
         $result = '';
-        
-        if ($body) {
-            foreach ($body->childNodes as $child) {
-                $result .= $dom->saveHTML($child);
-            }
+        foreach ($body->childNodes as $child) {
+            $result .= $dom->saveHTML($child);
         }
 
         return trim($result);
@@ -88,21 +99,25 @@ class HtmlSanitizer
         }
 
         if ($node->nodeType !== XML_ELEMENT_NODE) {
-            // Remove non-element, non-text nodes (comments, CDATA, etc.)
-            $node->parentNode->removeChild($node);
+            $node->parentNode?->removeChild($node);
             return;
         }
 
         $tagName = strtolower($node->nodeName);
 
-        // Remove disallowed tags but keep their content
+        // Disallowed executable tags: remove completely along with content
+        if (in_array($tagName, ['script', 'style', 'iframe', 'embed', 'object', 'applet'], true)) {
+            $node->parentNode?->removeChild($node);
+            return;
+        }
+
+        // Remove disallowed tags but keep their inner text/children
         if (!in_array($tagName, self::ALLOWED_TAGS, true)) {
-            // Replace tag with its children
             $fragment = $node->ownerDocument->createDocumentFragment();
             while ($node->firstChild) {
                 $fragment->appendChild($node->firstChild);
             }
-            $node->parentNode->replaceChild($fragment, $node);
+            $node->parentNode?->replaceChild($fragment, $node);
             return;
         }
 
@@ -110,40 +125,43 @@ class HtmlSanitizer
         $allowedAttrs = self::ALLOWED_ATTRIBUTES[$tagName] ?? [];
         $attrsToRemove = [];
 
-        foreach ($node->attributes as $attr) {
-            $attrName = strtolower($attr->name);
-            
-            if (!in_array($attrName, $allowedAttrs, true)) {
-                $attrsToRemove[] = $attr->name);
-                continue;
-            }
-
-            // Special handling for href and src - validate URL scheme
-            if (in_array($attrName, ['href', 'src'], true)) {
-                $value = $attr->value;
-                $scheme = parse_url($value, PHP_URL_SCHEME);
+        if ($node->hasAttributes()) {
+            foreach ($node->attributes as $attr) {
+                $attrName = strtolower($attr->name);
                 
-                // Allow relative URLs (no scheme)
-                if ($scheme !== null && !in_array(strtolower($scheme), self::ALLOWED_SCHEMES, true)) {
+                if (!in_array($attrName, $allowedAttrs, true)) {
                     $attrsToRemove[] = $attr->name;
                     continue;
                 }
 
-                // Block javascript: and data: URLs
-                if ($scheme !== null && in_array(strtolower($scheme), ['javascript', 'data', 'vbscript'], true)) {
-                    $attrsToRemove[] = $attr->name;
+                // Special handling for href and src - validate URL scheme
+                if (in_array($attrName, ['href', 'src'], true)) {
+                    $value = $attr->value;
+                    $scheme = parse_url($value, PHP_URL_SCHEME);
+                    
+                    // Allow relative URLs (no scheme)
+                    if ($scheme !== null && !in_array(strtolower($scheme), self::ALLOWED_SCHEMES, true)) {
+                        $attrsToRemove[] = $attr->name;
+                        continue;
+                    }
+
+                    // Block javascript: and data: URLs
+                    if ($scheme !== null && in_array(strtolower($scheme), ['javascript', 'data', 'vbscript'], true)) {
+                        $attrsToRemove[] = $attr->name;
+                    }
                 }
             }
-        }
 
-        foreach ($attrsToRemove as $attrName) {
-            $node->removeAttribute($attrName);
+            foreach ($attrsToRemove as $attrName) {
+                $node->removeAttribute($attrName);
+            }
         }
 
         // Add rel="noopener noreferrer" to external links
         if ($tagName === 'a' && $node->hasAttribute('href')) {
             $href = $node->getAttribute('href');
-            if (str_starts_with($href, 'http') && !str_contains($href, request()->getHost())) {
+            $host = request() ? request()->getHost() : '';
+            if (str_starts_with($href, 'http') && ($host === '' || !str_contains($href, $host))) {
                 $node->setAttribute('rel', 'noopener noreferrer');
                 $node->setAttribute('target', '_blank');
             }

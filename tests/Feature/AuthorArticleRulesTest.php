@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Article;
 use App\Models\Category;
 use App\Models\User;
+use App\Support\HtmlSanitizer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -602,5 +603,168 @@ class AuthorArticleRulesTest extends TestCase
         $article->refresh();
         $this->assertEquals(Article::STATUS_REJECTED, $article->status);
         $this->assertNull($article->published_at);
+    }
+
+    /**
+     * Sanitization Test 1:
+     * Check that normal content is not damaged: p, h2, strong, em, a, ul, ol, li, blockquote, img stay.
+     * Check that <script>, onclick attributes, and javascript: links are removed.
+     */
+    public function test_html_sanitizer_preserves_allowed_tags_and_removes_malicious_vectors(): void
+    {
+        $dirtyHtml = '<h2>Clean Heading</h2>'
+            . '<p>Paragraph with <strong>bold</strong> and <em>emphasis</em>.</p>'
+            . '<ul><li>Bullet 1</li><li>Bullet 2</li></ul>'
+            . '<ol><li>Step 1</li><li>Step 2</li></ol>'
+            . '<blockquote>Notable quote from author</blockquote>'
+            . '<a href="https://example.com" onclick="stealCookies()">Legit Link</a>'
+            . '<a href="javascript:alert(\'pwned\')">Malicious Link</a>'
+            . '<img src="https://example.com/photo.jpg" alt="Photo" width="400" height="300" loading="lazy" onerror="exploit()">'
+            . '<script>alert("XSS Attack");</script>'
+            . '<style>body { display:none; }</style>';
+
+        $cleanHtml = HtmlSanitizer::sanitize($dirtyHtml);
+
+        // Allowed tags MUST remain
+        $this->assertStringContainsString('<h2>Clean Heading</h2>', $cleanHtml);
+        $this->assertStringContainsString('<p>Paragraph with <strong>bold</strong> and <em>emphasis</em>.</p>', $cleanHtml);
+        $this->assertStringContainsString('<ul><li>Bullet 1</li><li>Bullet 2</li></ul>', $cleanHtml);
+        $this->assertStringContainsString('<ol><li>Step 1</li><li>Step 2</li></ol>', $cleanHtml);
+        $this->assertStringContainsString('<blockquote>Notable quote from author</blockquote>', $cleanHtml);
+        $this->assertStringContainsString('<a href="https://example.com"', $cleanHtml);
+        $this->assertStringContainsString('<img src="https://example.com/photo.jpg"', $cleanHtml);
+        $this->assertStringContainsString('alt="Photo"', $cleanHtml);
+
+        // Malicious vectors MUST be removed
+        $this->assertStringNotContainsString('<script', $cleanHtml);
+        $this->assertStringNotContainsString('XSS Attack', $cleanHtml);
+        $this->assertStringNotContainsString('<style', $cleanHtml);
+        $this->assertStringNotContainsString('onclick', $cleanHtml);
+        $this->assertStringNotContainsString('stealCookies', $cleanHtml);
+        $this->assertStringNotContainsString('javascript:', $cleanHtml);
+        $this->assertStringNotContainsString('pwned', $cleanHtml);
+        $this->assertStringNotContainsString('onerror', $cleanHtml);
+        $this->assertStringNotContainsString('exploit', $cleanHtml);
+    }
+
+    /**
+     * Sanitization Test 2:
+     * API store and update endpoints apply HtmlSanitizer to content and excerpt.
+     */
+    public function test_api_store_and_update_sanitizes_content_and_excerpt(): void
+    {
+        $author = User::factory()->create(['role' => 'author']);
+        Sanctum::actingAs($author);
+
+        $dirtyContent = '<h2>API Heading</h2><p>Safe content with <strong>bold</strong>.</p>'
+            . '<script>evilApiCode();</script>'
+            . '<a href="https://valid.com" onclick="badApiClick()">Link</a>'
+            . '<img src="https://valid.com/img.png" onerror="badApiImg()">';
+
+        $dirtyExcerpt = 'Excerpt with <script>hackExcerpt();</script><strong>bold</strong>';
+
+        // 1. Create via API
+        $createRes = $this->postJson('/api/v1/articles', [
+            'title' => 'API Sanitized Article',
+            'excerpt' => $dirtyExcerpt,
+            'content' => $dirtyContent,
+            'category_slug' => 'technology',
+            'status' => 'draft',
+        ]);
+
+        $createRes->assertStatus(201);
+        $articleId = $createRes->json('data.id');
+
+        $article = Article::find($articleId);
+        $this->assertStringNotContainsString('<script', $article->content);
+        $this->assertStringNotContainsString('evilApiCode', $article->content);
+        $this->assertStringNotContainsString('onclick', $article->content);
+        $this->assertStringNotContainsString('onerror', $article->content);
+        $this->assertStringContainsString('<h2>API Heading</h2>', $article->content);
+        $this->assertStringContainsString('<strong>bold</strong>', $article->content);
+
+        $this->assertStringNotContainsString('<script', $article->excerpt);
+        $this->assertStringNotContainsString('hackExcerpt', $article->excerpt);
+        $this->assertStringContainsString('<strong>bold</strong>', $article->excerpt);
+
+        // 2. Update via API
+        $dirtyUpdateContent = '<p>Updated content with <em>italics</em></p><script>hackUpdate();</script>';
+        $dirtyUpdateExcerpt = 'Updated excerpt <a href="javascript:badUrl()">link</a>';
+
+        $updateRes = $this->putJson("/api/v1/articles/{$articleId}", [
+            'content' => $dirtyUpdateContent,
+            'excerpt' => $dirtyUpdateExcerpt,
+        ]);
+
+        $updateRes->assertStatus(200);
+
+        $article->refresh();
+        $this->assertStringNotContainsString('<script', $article->content);
+        $this->assertStringNotContainsString('hackUpdate', $article->content);
+        $this->assertStringContainsString('<em>italics</em>', $article->content);
+
+        $this->assertStringNotContainsString('javascript:', $article->excerpt);
+        $this->assertStringNotContainsString('badUrl', $article->excerpt);
+    }
+
+    /**
+     * Sanitization Test 3:
+     * Website DashboardController store (create and edit) applies HtmlSanitizer to content and excerpt.
+     */
+    public function test_website_dashboard_store_and_update_sanitizes_content_and_excerpt(): void
+    {
+        $author = User::factory()->create(['role' => 'author']);
+        $this->actingAs($author);
+
+        $dirtyContent = '<h2>Web Heading</h2><p>Safe content with <blockquote>quote</blockquote></p>'
+            . '<script>evilWebCode();</script>'
+            . '<a href="https://webvalid.com" onclick="badWebClick()">Link</a>';
+        $dirtyExcerpt = 'Web excerpt with <script>hackWebExcerpt();</script> text';
+
+        // 1. Create on website via POST /dashboard/posts
+        $response = $this->post('/dashboard/posts', [
+            'title' => 'Web Sanitized Article',
+            'slug' => 'web-sanitized-article',
+            'excerpt' => $dirtyExcerpt,
+            'content' => $dirtyContent,
+            'category_slug' => 'technology',
+            'status' => 'draft',
+        ]);
+
+        $response->assertRedirect('/dashboard/posts');
+
+        $article = Article::where('slug', 'web-sanitized-article')->first();
+        $this->assertNotNull($article);
+        $this->assertStringNotContainsString('<script', $article->content);
+        $this->assertStringNotContainsString('evilWebCode', $article->content);
+        $this->assertStringNotContainsString('onclick', $article->content);
+        $this->assertStringContainsString('<h2>Web Heading</h2>', $article->content);
+        $this->assertStringContainsString('<blockquote>quote</blockquote>', $article->content);
+
+        $this->assertStringNotContainsString('<script', $article->excerpt);
+        $this->assertStringNotContainsString('hackWebExcerpt', $article->excerpt);
+
+        // 2. Edit on website via PUT /dashboard/posts/{id}
+        $dirtyEditContent = '<p>Edited web content <script>hackEditWeb();</script></p>';
+        $dirtyEditExcerpt = 'Edited web excerpt <a href="javascript:exploit()">test</a>';
+
+        $editResponse = $this->put("/dashboard/posts/{$article->id}", [
+            'title' => 'Web Sanitized Article Edited',
+            'slug' => 'web-sanitized-article-edited',
+            'excerpt' => $dirtyEditExcerpt,
+            'content' => $dirtyEditContent,
+            'category_slug' => 'technology',
+            'status' => 'draft',
+        ]);
+
+        $editResponse->assertRedirect('/dashboard/posts');
+
+        $article->refresh();
+        $this->assertStringNotContainsString('<script', $article->content);
+        $this->assertStringNotContainsString('hackEditWeb', $article->content);
+        $this->assertStringContainsString('<p>Edited web content </p>', $article->content);
+
+        $this->assertStringNotContainsString('javascript:', $article->excerpt);
+        $this->assertStringNotContainsString('exploit', $article->excerpt);
     }
 }

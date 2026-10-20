@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\Comment;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -130,15 +131,16 @@ class DashboardController extends Controller
 
         $status = $request->input('status');
 
+        $sanitizedContent = HtmlSanitizer::sanitize($request->input('content'));
         $data = [
             'title' => $request->input('title'),
             'slug' => $request->input('slug'),
-            'excerpt' => $request->input('excerpt'),
-            'content' => $request->input('content'),
+            'excerpt' => HtmlSanitizer::sanitize($request->input('excerpt')),
+            'content' => $sanitizedContent,
             'category_slug' => $request->input('category_slug'),
             'tags' => $request->input('tags', []),
             'status' => $status,
-            'reading_time' => $this->calculateReadingTime($request->input('content')),
+            'reading_time' => $this->calculateReadingTime($sanitizedContent),
         ];
 
         if ($status === Article::STATUS_PUBLISHED && (!$article || !$article->isPublished())) {
