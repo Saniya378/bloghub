@@ -583,19 +583,48 @@ class AuthorController extends Controller
             ->whereIn('article_id', $articleIds);
 
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $status = $request->input('status');
+            if (in_array($status, ['pending', 'approved', 'rejected'], true)) {
+                $query->where('status', $status);
+            }
         }
 
         if ($request->filled('article_id')) {
             $query->where('article_id', $request->input('article_id'));
         }
 
-        $perPage = min(max((int) $request->input('per_page', 15), 1), 50);
+        $perPage = min(max((int) $request->input('per_page', 10), 1), 50);
         $comments = $query->latest()->paginate($perPage);
+
+        $formatted = collect($comments->items())->map(function ($comment) {
+            return [
+                'id' => $comment->id,
+                'content' => $comment->content,
+                'status' => $comment->status,
+                'likes' => (int) $comment->likes,
+                'created_at' => $comment->created_at?->toISOString() ?? (string) $comment->created_at,
+                'user_id' => $comment->user_id,
+                'commenter_name' => $comment->user?->name,
+                'commenter_avatar' => $comment->user?->avatar,
+                'user' => $comment->user ? [
+                    'id' => $comment->user->id,
+                    'name' => $comment->user->name,
+                    'username' => $comment->user->username,
+                    'avatar' => $comment->user->avatar,
+                ] : null,
+                'article_id' => $comment->article_id,
+                'article_title' => $comment->article?->title,
+                'article' => $comment->article ? [
+                    'id' => $comment->article->id,
+                    'title' => $comment->article->title,
+                    'slug' => $comment->article->slug,
+                ] : null,
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $comments->items(),
+            'data' => $formatted,
             'pagination' => [
                 'current_page' => $comments->currentPage(),
                 'last_page' => $comments->lastPage(),
@@ -622,14 +651,20 @@ class AuthorController extends Controller
 
         $user = $request->user();
 
-        if ($comment->article && $comment->article->user_id !== $user->id && $user->role !== 'admin') {
+        // Must be author of the article or platform admin
+        if (!$comment->article || ($comment->article->user_id !== $user->id && $user->role !== 'admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You can only moderate comments on your own articles.',
             ], 403);
         }
 
+        $wasApproved = $comment->status === 'approved';
         $comment->update(['status' => 'approved']);
+
+        if (!$wasApproved && $comment->article) {
+            $comment->article->increment('comment_count');
+        }
 
         return response()->json([
             'success' => true,
@@ -654,19 +689,21 @@ class AuthorController extends Controller
 
         $user = $request->user();
 
-        if ($comment->article && $comment->article->user_id !== $user->id && $user->role !== 'admin') {
+        // Must be author of the article or platform admin
+        if (!$comment->article || ($comment->article->user_id !== $user->id && $user->role !== 'admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You can only delete comments on your own articles.',
             ], 403);
         }
 
+        $wasApproved = $comment->status === 'approved';
         $replies = count($comment->descendantIds());
         $article = $comment->article;
         $comment->delete();
 
-        if ($article) {
-            $article->decrement('comment_count', $replies + 1);
+        if ($article && $wasApproved && $article->comment_count > 0) {
+            $article->decrement('comment_count', min($article->comment_count, $replies + 1));
         }
 
         return response()->json([

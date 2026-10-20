@@ -92,8 +92,10 @@ class CommentController extends Controller
 
         $user = $request->user();
 
-        // Auto-approve or moderate based on role
-        $status = ($user->role === 'admin' || $user->role === 'author') ? 'approved' : 'approved';
+        // Auto-approve or moderate based on role:
+        // Readers require moderation (status: pending).
+        // Authors and admins are auto-approved (status: approved).
+        $status = ($user->role === 'admin' || $user->role === 'author') ? 'approved' : 'pending';
 
         $comment = Comment::create([
             'user_id' => $user->id,
@@ -104,21 +106,23 @@ class CommentController extends Controller
             'likes' => 0,
         ]);
 
-        $article->increment('comment_count');
+        if ($status === 'approved') {
+            $article->increment('comment_count');
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Comment posted successfully.',
+            'message' => $status === 'approved' ? 'Comment posted successfully.' : 'Comment submitted for moderation.',
             'data' => $comment->load('user:id,name,username,avatar,role'),
         ], 201);
     }
 
     /**
-     * Delete a comment (owner or admin).
+     * Delete a comment (owner, article author, or admin).
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $comment = Comment::find($id);
+        $comment = Comment::with('article')->find($id);
 
         if (!$comment) {
             return response()->json([
@@ -128,19 +132,22 @@ class CommentController extends Controller
         }
 
         $user = $request->user();
+        $isArticleAuthor = $comment->article && $comment->article->user_id === $user->id;
 
-        if ($comment->user_id !== $user->id && $user->role !== 'admin') {
+        if ($comment->user_id !== $user->id && !$isArticleAuthor && $user->role !== 'admin') {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to delete this comment.',
             ], 403);
         }
 
+        $wasApproved = $comment->status === 'approved';
+        $replyCount = count($comment->descendantIds());
         $article = $comment->article;
         $comment->delete();
 
-        if ($article && $article->comment_count > 0) {
-            $article->decrement('comment_count');
+        if ($article && $wasApproved && $article->comment_count > 0) {
+            $article->decrement('comment_count', min($article->comment_count, $replyCount + 1));
         }
 
         return response()->json([

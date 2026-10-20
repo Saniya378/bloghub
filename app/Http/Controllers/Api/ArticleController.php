@@ -160,6 +160,7 @@ class ArticleController extends Controller
             'user:id,name,username,avatar,role,bio,specialty,tagline',
             'comments' => function ($q) {
                 $q->whereNull('parent_id')
+                    ->where('status', 'approved')
                     ->with(['user:id,name,username,avatar', 'replies.user:id,name,username,avatar'])
                     ->latest();
             },
@@ -205,6 +206,8 @@ class ArticleController extends Controller
             ->get();
 
         $data = $article->toArray();
+        $data['comment_count'] = $article->comments()->where('status', 'approved')->count();
+        $data['comments_count'] = $data['comment_count'];
         $data['is_liked'] = $isLiked;
         $data['is_bookmarked'] = $isBookmarked;
         $data['is_following_author'] = $isFollowingAuthor;
