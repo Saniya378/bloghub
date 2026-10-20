@@ -25,5 +25,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                $retryAfter = $e->getHeaders()['Retry-After'] ?? null;
+                $message = $retryAfter
+                    ? "Too many requests. Please try again in {$retryAfter} seconds."
+                    : 'Too many requests. Please slow down.';
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 429, $e->getHeaders());
+            }
+        });
     })->create();

@@ -26,7 +26,7 @@ Route::prefix('v1')->group(function () {
     // AUTHENTICATION & PASSWORD RESET (PUBLIC)
     // ==========================================
     Route::prefix('auth')->group(function () {
-        Route::post('/register', [AuthController::class, 'register']);
+        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -93,17 +93,19 @@ Route::prefix('v1')->group(function () {
             Route::post('/become-author', [ProfileController::class, 'becomeAuthor']);
         });
 
-        // Article CRUD & User interactions
-        Route::post('/articles', [ArticleController::class, 'store']);
-        Route::match(['put', 'post'], '/articles/{id}', [ArticleController::class, 'update']);
-        Route::post('/articles/{id}/update', [ArticleController::class, 'update']);
-        Route::post('/articles/{id}/submit', [ArticleController::class, 'submit']);
-        Route::delete('/articles/{id}', [ArticleController::class, 'destroy']);
+        // Article CRUD (write operations throttled: 60/min) & User interactions
+        Route::middleware(['throttle:60,1'])->group(function () {
+            Route::post('/articles', [ArticleController::class, 'store']);
+            Route::match(['put', 'post'], '/articles/{id}', [ArticleController::class, 'update']);
+            Route::post('/articles/{id}/update', [ArticleController::class, 'update']);
+            Route::post('/articles/{id}/submit', [ArticleController::class, 'submit']);
+            Route::delete('/articles/{id}', [ArticleController::class, 'destroy']);
+        });
         Route::post('/articles/{id}/toggle-like', [ArticleController::class, 'toggleLike']);
         Route::post('/articles/{id}/toggle-bookmark', [ArticleController::class, 'toggleBookmark']);
 
-        // Comments management
-        Route::post('/articles/{articleId}/comments', [CommentController::class, 'store']);
+        // Comments management (create throttled: 20/min)
+        Route::post('/articles/{articleId}/comments', [CommentController::class, 'store'])->middleware('throttle:20,1');
         Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
         Route::post('/comments/{id}/toggle-like', [CommentController::class, 'toggleLike']);
 
