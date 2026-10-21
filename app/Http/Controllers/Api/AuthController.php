@@ -33,17 +33,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Generate a clean unique username from the name
-        $baseUsername = Str::slug($request->name, '');
-        if (empty($baseUsername)) {
-            $baseUsername = 'user';
-        }
-        $username = $baseUsername;
-        $counter = 1;
-        while (User::where('username', $username)->exists()) {
-            $username = $baseUsername . $counter;
-            $counter++;
-        }
+        $username = $this->generateUniqueUsername($request->name);
 
         $user = User::create([
             'name' => $request->name,
@@ -54,6 +44,72 @@ class AuthController extends Controller
             'is_active' => true,
         ]);
 
+        return $this->respondWithRegistrationToken($user);
+    }
+
+    /**
+     * Register a new author account and generate a Sanctum API token.
+     */
+    public function registerAuthor(Request $request): JsonResponse
+    {
+        if ($request->has('email') && is_string($request->input('email'))) {
+            $request->merge([
+                'email' => strtolower(trim($request->input('email'))),
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $username = $this->generateUniqueUsername($request->name);
+
+        $user = User::create([
+            'name' => $request->name,
+            'username' => $username,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'author',
+            'is_active' => true,
+        ]);
+
+        return $this->respondWithRegistrationToken($user);
+    }
+
+    /**
+     * Generate a clean unique username from the display name.
+     */
+    private function generateUniqueUsername(?string $name): string
+    {
+        $baseUsername = Str::slug($name ?? '', '');
+        if (empty($baseUsername)) {
+            $baseUsername = 'user';
+        }
+        $username = $baseUsername;
+        $counter = 1;
+        while (User::where('username', $username)->exists()) {
+            $username = $baseUsername . $counter;
+            $counter++;
+        }
+
+        return $username;
+    }
+
+    /**
+     * Build standard registration response with Sanctum bearer token.
+     */
+    private function respondWithRegistrationToken(User $user): JsonResponse
+    {
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([

@@ -27,6 +27,7 @@ Route::prefix('v1')->group(function () {
     // ==========================================
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+        Route::post('/register-author', [AuthController::class, 'registerAuthor'])->middleware('throttle:10,1');
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);

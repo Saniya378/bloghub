@@ -15,6 +15,7 @@
 4. [HTML Sanitization & Content Rules](#4-html-sanitization--content-rules)
 5. [Standard Error & Rate Limiting Responses](#5-standard-error--rate-limiting-responses)
 6. [Authentication Endpoints](#6-authentication-endpoints)
+   - [POST /api/v1/auth/register-author](#post-apiv1authregister-author)
    - [POST /api/v1/auth/login](#post-apiv1authlogin)
    - [GET /api/v1/auth/me](#get-apiv1authme)
    - [POST /api/v1/auth/logout](#post-apiv1authlogout)
@@ -270,6 +271,61 @@ All throttled write routes return JSON with standard keys and HTTP header `Retry
 ---
 
 ## 6. Authentication Endpoints
+
+### POST `/api/v1/auth/register-author`
+- **Auth**: None (Public)
+- **Role Assigned**: Automatically sets `role: "author"` and `is_active: true`.
+- **Username**: Auto-generated from `name` (clean slug with collision counter suffix).
+- **Email Normalization**: Automatically trimmed and lowercased before validation and storage.
+- **Rate Limit**: 10 requests/min (`throttle:10,1`)
+- **Request Body** (`application/json`):
+  | Field | Type | Required | Description |
+  |---|---|---|---|
+  | `name` | string | **Yes** | Author display name (max 255 chars). |
+  | `email` | string | **Yes** | Valid unique email (max 255 chars). Trimmed and lowercased. |
+  | `password` | string | **Yes** | Account password (min 8 chars). |
+  | `password_confirmation` | string | **Yes** | Must match `password`. |
+
+- **Success Response (201 Created)**:
+```json
+{
+    "success": true,
+    "message": "Registration successful",
+    "data": {
+        "user": {
+            "id": 15,
+            "name": "Sarah Connor",
+            "username": "sarah-connor",
+            "email": "sarah.connor@example.com",
+            "role": "author",
+            "is_active": true,
+            "created_at": "2026-10-21T07:35:00.000000Z",
+            "updated_at": "2026-10-21T07:35:00.000000Z"
+        },
+        "token": "12|a9ZbC01dE...",
+        "token_type": "Bearer"
+    }
+}
+```
+- **Error Responses**:
+  - `422 Unprocessable Entity` (Validation error):
+    ```json
+    {
+        "success": false,
+        "message": "Validation error",
+        "errors": {
+            "email": ["The email has already been taken."],
+            "password": ["The password field confirmation does not match."]
+        }
+    }
+    ```
+  - `429 Too Many Requests` (Rate limit exceeded):
+    ```json
+    {
+        "success": false,
+        "message": "Too many requests. Please try again in 58 seconds."
+    }
+    ```
 
 ### POST `/api/v1/auth/login`
 - **Auth**: None (Public)
